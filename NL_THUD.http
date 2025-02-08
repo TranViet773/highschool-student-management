@@ -1,0 +1,6 @@
+@NL_THUD_HostAddress = http://localhost:5274
+
+GET {{NL_THUD_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
