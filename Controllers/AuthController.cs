@@ -17,9 +17,11 @@ namespace NL_THUD.Controllers
     {
 
         private readonly IUserService _userService;
-        public AuthController(IUserService userService)
+        private readonly IClassService _classService;
+        public AuthController(IUserService userService, IClassService classService)
         {
             _userService = userService;
+            _classService = classService;
         }
 
         [HttpPost("register")]
@@ -74,7 +76,7 @@ namespace NL_THUD.Controllers
                         }
 
 
-
+                        
                        
                         string genderStr = reader.GetValue(4)?.ToString()?.Trim().ToLower();
                         bool gender = genderStr == "nam";
@@ -102,6 +104,17 @@ namespace NL_THUD.Controllers
                         };
 
                         var response = await _userService.RegisterAsync(userRegisterRequest);
+
+                        if (!string.IsNullOrEmpty(reader.GetString(7))){
+                            var Class = await _classService.GetClassByCode(reader.GetString(7));
+                            if (Class.Classes_Id == null) {
+                                throw new Exception("Class do not exist!");
+                            }
+                            else
+                            {
+                                var ClassStudent = await _classService.AddStudentToClass(response.Code, Class.Classes_Id);
+                            }
+                        }
                     }
                 }
             }
@@ -142,6 +155,14 @@ namespace NL_THUD.Controllers
             return Ok(response);
         }
 
+        [HttpDelete("delete-user/{id}")]
+        [Authorize]
+        public async Task<IActionResult> GetCurrentUser(Guid id)
+        {
+            var response = await _userService.DeleteUserById(id);
+            return Ok(response);
+        }
+
         //Refresh token
         [HttpPost("refresh-token")]
         [Authorize]
@@ -163,5 +184,16 @@ namespace NL_THUD.Controllers
             }
             return BadRequest(response);
         }
+
+        //Changepassword
+        [HttpPost("change-password/{id}")]
+        [Authorize]
+        public async Task<IActionResult> ChangePasswordAsync([FromBody] UserChangePasswordRequest request, Guid id)
+        {
+            var response = await _userService.changePasswordAsync(request, id);
+            return Ok(response);
+        }
+
+        //UpdateUser
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using NL_THUD.Dtos.Response;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace NL_THUD.Models
@@ -11,6 +12,5 @@ namespace NL_THUD.Models
         public string Province_Name { get; set; }
 
         public List<Districts> Districts { get; set; }
-        public List<Address> Addresses { get; set; }
     }
 }

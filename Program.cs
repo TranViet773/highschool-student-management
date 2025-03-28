@@ -1,3 +1,4 @@
+using CloudinaryDotNet;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -55,6 +56,7 @@ builder.Services.AddSwaggerGen(c =>
 
 //ApplicationDbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 
 
 //Adding Identity
@@ -64,11 +66,23 @@ builder.Services.AddIdentity<Person, IdentityRole>()
 //Adding automapper
 builder.Services.AddAutoMapper(typeof(UserMapping).Assembly);
 builder.Services.AddAutoMapper(typeof(ApiResponseMapper));
+builder.Services.AddAutoMapper(typeof(ClassMapper));
+builder.Services.AddAutoMapper(typeof(SubjectMapper));
+builder.Services.AddAutoMapper(typeof(AddressMapper));
+builder.Services.AddAutoMapper(typeof(ScoreMapper));
 
 //Adding services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<IClassService, ClassService>();
+builder.Services.AddScoped<IStudentService, StudentService>();
+builder.Services.AddScoped<ISubjectService, SubjectService>();
+builder.Services.AddScoped<ITeacherService, TeacherService>();
+builder.Services.AddScoped<IAddressService, AddressService>();
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+builder.Services.AddScoped<IScoreService, ScoreService>();
+
 
 //Adding JWT token
 builder.Services.ConfigureIdentity();

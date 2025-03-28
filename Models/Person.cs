@@ -13,6 +13,10 @@ namespace NL_THUD.Models
         public string? Fullname {  get; set; }
         public DateOnly DoB {  get; set; }
         public bool Gender {  get; set; }
+        public bool? isDeleted { get; set; }
+        public bool? isBlocked { get; set; }
+        public bool? isActive { get; set; } = false;
+        public DateTime? initialPasswordExpiry { get; set; }
         public string? RefreshToken { get; set; }
         public DateTime? RefreshTokenExpireTime { get; set; }
         public DateTime CreateAt { get; set; }

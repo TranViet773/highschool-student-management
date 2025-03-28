@@ -9,12 +9,12 @@ namespace NL_THUD.Services.ServiceImpl
         Task<UserResponse> LogInAsync(UserLoginRequest request);
         Task<UserResponse> GetUserByIdAsync(Guid id);
         Task<CurrentUserResponse> GetCurrentUserAsync();
-        Task<UserResponse> UpdateUserAsync(UserRegisterRequest register);
+        Task<UserResponse> UpdateUserAsync(UserUpdateRequest register, Guid userId);
         Task<RevokeRefreshTokenResponse> RevokeRefreshToken(RefreshTokenRequest refreshToken);
         Task<CurrentUserResponse> RefreshToken(RefreshTokenRequest refreshToken);
-        Task DeleteUserById(Guid id);   
+        Task<ApiResponse<string>> DeleteUserById(Guid id);   
         Task<List<UserResponse>> GetAllUsersAsync(string role);
         Task<List<UserResponse>> filterUser(string? codeClass, string? year, string? query, string role);
-
+        Task<ApiResponse<UserResponse>> changePasswordAsync(UserChangePasswordRequest request, Guid id);
     }
 }

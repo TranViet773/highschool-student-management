@@ -11,6 +11,19 @@ namespace NL_THUD.Mapping
             CreateMap<Person, UserResponse>();
             CreateMap<Person, CurrentUserResponse>();
             CreateMap<UserRegisterRequest, Person>();
+
+            CreateMap<UserUpdateRequest, Person>()
+            .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+
+            CreateMap<UserRegisterRequest, Teacher>().IncludeBase<UserRegisterRequest, Person>();
+            CreateMap<UserRegisterRequest, Students>()
+            .IncludeBase<UserRegisterRequest, Person>();
+            CreateMap<UserRegisterRequest, Parents>()
+            .IncludeBase<UserRegisterRequest, Person>();
+            CreateMap<UserRegisterRequest, SystemAdmin>()
+            .IncludeBase<UserRegisterRequest, Person>();
+            CreateMap<UserRegisterRequest, ManagementStaff>()
+            .IncludeBase<UserRegisterRequest, Person>();
         }
     }
 }

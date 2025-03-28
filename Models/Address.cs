@@ -9,13 +9,12 @@ namespace NL_THUD.Models
         public Guid Address_Id { get; set; } = Guid.NewGuid();
         public string Address_Detail { get; set; }
 
-        public Provinces Provinces { get; set; }
-        [ForeignKey("Province_Id")]
-        public int Province_Id {  get; set; }
+        [ForeignKey("Wards")]
+        public int Ward_Id { get; set; }
+        public Wards Wards { get; set; }
 
+        [ForeignKey("Person")]
+        public string Person_Id { get; set; }
         public Person Person { get; set; }
-
-        [ForeignKey("Person_Id")]
-        public Guid Person_Id { get; set; }
     }
 }

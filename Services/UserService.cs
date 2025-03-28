@@ -2,12 +2,15 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using NL_THUD.Data;
 using NL_THUD.Dtos.Request;
 using NL_THUD.Dtos.Response;
 using NL_THUD.Models;
 using NL_THUD.Models.Enum;
 using NL_THUD.Services.ServiceImpl;
 using System.Globalization;
+using System.Numerics;
 using System.Runtime.Intrinsics.Arm;
 using System.Security.Cryptography;
 using System.Text;
@@ -21,24 +24,39 @@ namespace NL_THUD.Services
         private readonly ILogger<UserService> _logger;
         private readonly UserManager<Person> _userManager;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IAddressService _addressService;
         private readonly IMapper _mapper;
-        public UserService(ITokenService tokenService, ILogger<UserService> logger, ICurrentUserService currentUserService, UserManager<Person> userManager, IMapper mapper)
+        private readonly ApplicationDbContext _context;
+        public UserService(ITokenService tokenService, ILogger<UserService> logger, ICurrentUserService currentUserService, UserManager<Person> userManager, IMapper mapper, ApplicationDbContext context, IAddressService addressService)
         {
             this.tokenService = tokenService;
             _logger = logger;
             _currentUserService = currentUserService;
             _userManager = userManager;
             _mapper = mapper;
+            _addressService = addressService;
+            _context = context;
         }
 
-        public async Task DeleteUserById(Guid id)
+        public async Task<ApiResponse<string>> DeleteUserById(Guid id)
         {
             var user = await _userManager.FindByIdAsync(id.ToString());
             if (user == null) {
                 _logger.LogError("User is not found!");
-                throw new Exception("User is not found!");
+                return new ApiResponse<string>
+                {
+                    Code = "404",
+                    Message = "User is not found!!",
+                    Data = ""
+                };
             }
             await _userManager.DeleteAsync(user);
+            return new ApiResponse<string>
+            {
+                Code = "200",
+                Message = "Successfully!",
+                Data = ""
+            };
         }
 
         public async Task<CurrentUserResponse> GetCurrentUserAsync()
@@ -60,7 +78,22 @@ namespace NL_THUD.Services
                 _logger.LogError("User not found!");
                 throw new Exception("User not found!");
             }
-            return _mapper.Map<UserResponse>(user);
+            var year = $"{DateTime.Now.Year}-{DateTime.Now.Year + 1}";
+
+            var result = _mapper.Map<UserResponse>(user);
+            Guid userId = Guid.Parse(user.Id);
+            var data = await _addressService.GetAddressAsync(userId);
+            if(data.Data != null)
+            {
+                result.Address = data.Data;
+            }
+            var ClassStudent = _context.ClassStudents.FirstOrDefault(u => u.Student_Id == result.Id.ToString() && u.Year == year);
+            if (ClassStudent != null)
+            {
+                var Class = await _context.Classes.FirstOrDefaultAsync(c => c.Classes_Id == ClassStudent.Class_Id);
+                result.ClassCode = Class.Classes_Code;
+            }
+            return result;
         }
 
         public async Task<UserResponse> LogInAsync(UserLoginRequest request)
@@ -95,6 +128,10 @@ namespace NL_THUD.Services
             userResponse.AccessToken = token;
             userResponse.UpdateAt = DateTime.Now;
             userResponse.CreateAt = DateTime.Now;
+            if(user.initialPasswordExpiry > DateTime.Now.AddHours(12) && user.isActive == false) // check xem cái pass 1st còn hiệu lực không, nếu không thì khóa.
+            {
+                userResponse.isBlocked = true;
+            }
             return userResponse;
         }
 
@@ -125,26 +162,50 @@ namespace NL_THUD.Services
         public async Task<UserResponse> RegisterAsync(UserRegisterRequest request)
         {
             _logger.LogInformation("Register new user!");
+
+            // Kiểm tra email đã tồn tại chưa
             var isExistedUser = await _userManager.FindByEmailAsync(request.Email);
             if (isExistedUser != null)
             {
-                _logger.LogError("User is existed!");
-                throw new Exception("User is exited!");
+                _logger.LogError("User already exists!");
+                throw new Exception("User already exists!");
             }
-            var newUser = _mapper.Map<Person>(request);
+
+            // Xác định loại người dùng (Teacher hoặc Student)
+            Person newUser;
+            switch (request.ERole.ToString())
+            {
+                case "TEACHER": newUser = _mapper.Map<Teacher>(request); break;
+                case "STUDENT": newUser = _mapper.Map<Students>(request); break;
+                case "PARENT": newUser = _mapper.Map<Parents>(request); break;
+                case "SYS_ADMIN": newUser = _mapper.Map<SystemAdmin>(request); break;
+                case "MANAGERMENT_STAFF": newUser = _mapper.Map<ManagementStaff>(request); break;
+                default: throw new Exception("Invalid role!");
+            }
+           
+
+            // Gán các thuộc tính chung
             newUser.UserName = GenerateUsername(request.FirstName, request.LastName);
             newUser.Code = await GenerateCode(newUser);
             newUser.Fullname = $"{request.LastName} {request.FirstName}";
+            newUser.initialPasswordExpiry = DateTime.Now.AddHours(12); // này là thời gian đổi pass word lần đầu tiên.
+            // Tạo user trong database  
             var result = await _userManager.CreateAsync(newUser, request.Password);
-            if (!result.Succeeded) {
+            if (!result.Succeeded)
+            {
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                _logger.LogError("Failed to create user!: {errors}", errors);
+                _logger.LogError("Failed to create user: {errors}", errors);
                 throw new Exception($"Failed to create user: {errors}");
             }
+
             _logger.LogInformation($"Registered user: {request.Email}");
+
+            // Tạo token JWT
             var token = await tokenService.GenerateToken(newUser);
+
             return _mapper.Map<UserResponse>(newUser);
         }
+
 
         public async Task<string> GenerateCode(Person user)
         {
@@ -255,23 +316,52 @@ namespace NL_THUD.Services
             }
         }
 
-        public async Task<UserResponse> UpdateUserAsync(UserRegisterRequest request)
+        public async Task<UserResponse> UpdateUserAsync(UserUpdateRequest request, Guid userId)
         {
-            var user = await _userManager.FindByEmailAsync(request.Email);
+            var user = await _userManager.FindByIdAsync(userId.ToString());
             if (user == null)
             {
-                _logger.LogError("Do not found user has Email");
-                throw new Exception("Do not found user has Email");
+                _logger.LogError($"User with ID {userId} not found");
+                throw new KeyNotFoundException($"User with ID {userId} not found");
             }
-            var newUser = _mapper.Map<Person>(request);
-            var result = await _userManager.UpdateAsync(newUser);
-            if (!result.Succeeded) {
-                _logger.LogError("Failed to update user");
-                throw new Exception("Failed to update user");
+
+            // Chỉ cập nhật những giá trị từ request mà khác null
+            _mapper.Map(request, user);
+            if (!string.IsNullOrWhiteSpace(request.FullName))
+            {
+                int spaceIndex = request.FullName.IndexOf(' '); // Tìm vị trí khoảng trắng đầu tiên
+
+                if (spaceIndex != -1) // Nếu có khoảng trắng
+                {
+                    user.FirstName = request.FullName.Substring(0, spaceIndex); // Lấy phần trước khoảng trắng
+                    user.LastName = request.FullName.Substring(spaceIndex + 1); // Lấy phần sau khoảng trắng
+                }
+                else
+                {
+                    user.FirstName = request.FullName; // Nếu không có khoảng trắng, lấy toàn bộ làm FirstName
+                    user.LastName = ""; // Không có LastName
+                }
             }
-            _logger.LogInformation($"Updated user successfully!");
-            return _mapper.Map<UserResponse>(newUser);
+
+            try
+            {
+                var result = await _userManager.UpdateAsync(user);
+                if (!result.Succeeded)
+                {
+                    _logger.LogError($"Failed to update user {userId}: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+                    throw new Exception("Failed to update user");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Failed to update user {userId}: {ex.Message}");
+                throw new Exception("Failed to update user", ex);
+            }
+
+            _logger.LogInformation($"Updated user {userId} successfully!");
+            return _mapper.Map<UserResponse>(user);
         }
+
 
         public async Task<List<UserResponse>> GetAllUsersAsync(string role)
         {
@@ -305,22 +395,88 @@ namespace NL_THUD.Services
 
             var isNumber = query != null && query.Length >= 4 && char.IsDigit(query[2]) && char.IsDigit(query[3]);
 
-
             var result = await _userManager.Users
                 .Where(u => u.ERole == eRole)
                 .Where(u => u.Code.Length >= 4 && u.Code.Substring(0, 4) == tmp)
-                .ToListAsync(); // Lấy danh sách trước để xử lý LINQ trên bộ nhớ
+                .ToListAsync();
 
             if (!string.IsNullOrEmpty(query))
             {
                 result = result.Where(u => isNumber ? u.Code == query : u.Fullname.Contains(query)).ToList();
             }
 
-            Console.WriteLine($"Trước khi mapping: {result.Count}");
+            
+            if (!string.IsNullOrEmpty(codeClass))
+            {
+                var classEntity = await _context.Classes.FirstOrDefaultAsync(u => u.Classes_Code == codeClass);
+                result = await _context.Students.Where(s => s.ClassStudents.Any(cs => cs.Class_Id == classEntity.Classes_Id)).Cast<Person>().ToListAsync();
+               
+            }
+
             var mappedResult = _mapper.Map<List<UserResponse>>(result);
-            Console.WriteLine($"Sau khi mapping: {mappedResult.Count}");
+            foreach (var user in mappedResult)
+            {
+                var classStudent = await _context.ClassStudents.FirstOrDefaultAsync(u => u.Student_Id == user.Id.ToString() && u.Year == year);
+                if (classStudent != null)
+                {
+                    var Class = await _context.Classes.FirstOrDefaultAsync(c => c.Classes_Id == classStudent.Class_Id);
+                    if (Class != null)
+                    {
+                        user.ClassCode = Class.Classes_Code;
+                    }
+                }
+            }
             return mappedResult;
         }
 
+        public async Task<ApiResponse<UserResponse>> changePasswordAsync(UserChangePasswordRequest request, Guid id)
+        {
+            var user = await _userManager.FindByIdAsync(id.ToString());
+            if(user is null)
+            {
+                _logger.LogError("User do not found!");
+                return new ApiResponse<UserResponse>
+                {
+                    Code = "404",
+                    Message = "User do not found!",
+                    Data = null
+                };
+            }
+
+            var checkOldPassword = await _userManager.CheckPasswordAsync(user, request.OldPassword); // true: match - false: do not match
+            if (!checkOldPassword)
+            {
+                return new ApiResponse<UserResponse>
+                {
+                    Code = "400",
+                    Message = "Old password is incorrect!",
+                    Data = null
+                };
+            }
+            var changePassword = await _userManager.ChangePasswordAsync(user, request.OldPassword, request.NewPassword);
+            if (!changePassword.Succeeded)
+            {
+                return new ApiResponse<UserResponse>
+                {
+                    Code = "400",
+                    Message = "Failed to change password!",
+                    Data = null
+                };
+            }
+            else
+            {
+                if (user.isActive == false) {
+                    user.isActive = true;
+                    await _userManager.UpdateAsync(user);
+                }
+                return new ApiResponse<UserResponse>
+                {
+                    Code = "200",
+                    Message = "Password changed successfully!",
+                    Data = null
+                };
+
+            }
+        }
     }
 }

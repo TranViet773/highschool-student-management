@@ -10,6 +10,8 @@ namespace NL_THUD.Models
         public int Ward_Id { get; set; }
         public string Ward_Name { get; set; }
 
+        public List<Address> Addresses = new List<Address>();
+
         //Relationship
         [ForeignKey("Districts_Id")]
         public int Districts_Id { get; set; }

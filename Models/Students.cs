@@ -11,8 +11,12 @@ namespace NL_THUD.Models
         [ForeignKey("ParentId")]
         public string ParentId { get; set; }
 
-        public List<Class_Student> Class_Students { get; set; } = new List<Class_Student>();
-        public List<Student_Score> student_Scores { get; set; } = new List<Student_Score>();
+        public string? Student_Parent_Name { get; set; }
+        public string? Student_Parent_Phone { get; set; }
+        public string? Student_Parent_Career { get; set; }
 
+        public List<Class_Student> ClassStudents { get; set; } = new List<Class_Student>();
+        public List<Student_Score> student_Scores { get; set; } = new List<Student_Score>();
+        public List<Evaluation> Evaluations { get; set; }
     }
 }

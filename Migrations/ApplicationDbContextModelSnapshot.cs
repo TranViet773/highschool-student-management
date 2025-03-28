@@ -155,49 +155,6 @@ namespace NL_THUD.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("NL_THUD.Models.AcademicTranscript", b =>
-                {
-                    b.Property<Guid>("AcademicTranscript_Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<float>("AVG_1st")
-                        .HasColumnType("real");
-
-                    b.Property<float>("AVG_2st")
-                        .HasColumnType("real");
-
-                    b.Property<float>("AVG_Final")
-                        .HasColumnType("real");
-
-                    b.Property<string>("Comment")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Conduct")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Great")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Note")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Performance")
-                        .HasColumnType("int");
-
-                    b.Property<string>("TeacherId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("AcademicTranscript_Id");
-
-                    b.HasIndex("TeacherId");
-
-                    b.ToTable("AcademicTranscripts");
-                });
-
             modelBuilder.Entity("NL_THUD.Models.Address", b =>
                 {
                     b.Property<Guid>("Address_Id")
@@ -208,25 +165,20 @@ namespace NL_THUD.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("PersonId")
+                    b.Property<string>("Person_Id")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<Guid>("Person_Id")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Province_Id")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProvincesProvince_Id")
+                    b.Property<int>("Ward_Id")
                         .HasColumnType("int");
 
                     b.HasKey("Address_Id");
 
-                    b.HasIndex("PersonId");
+                    b.HasIndex("Person_Id");
 
-                    b.HasIndex("ProvincesProvince_Id");
+                    b.HasIndex("Ward_Id");
 
-                    b.ToTable("Addressses");
+                    b.ToTable("Addresses", (string)null);
                 });
 
             modelBuilder.Entity("NL_THUD.Models.Class_Student", b =>
@@ -237,7 +189,7 @@ namespace NL_THUD.Migrations
                     b.Property<Guid>("Class_Id")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("Schedule_Id")
+                    b.Property<Guid?>("Schedule_Id")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Year")
@@ -250,7 +202,7 @@ namespace NL_THUD.Migrations
 
                     b.HasIndex("Schedule_Id");
 
-                    b.ToTable("Class_Student");
+                    b.ToTable("ClassStudents");
                 });
 
             modelBuilder.Entity("NL_THUD.Models.Classes", b =>
@@ -258,6 +210,13 @@ namespace NL_THUD.Migrations
                     b.Property<Guid>("Classes_Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Classes_Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool?>("Classes_IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Classes_Name")
                         .IsRequired()
@@ -295,6 +254,40 @@ namespace NL_THUD.Migrations
                     b.HasIndex("ProvincesProvince_Id");
 
                     b.ToTable("Districts");
+                });
+
+            modelBuilder.Entity("NL_THUD.Models.Evaluation", b =>
+                {
+                    b.Property<Guid>("Evaluation_Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Evaluation_Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("StudentId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("UpdateAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("UpdateTime_Expire")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("semester")
+                        .HasColumnType("int");
+
+                    b.Property<string>("year")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Evaluation_Id");
+
+                    b.HasIndex("StudentId");
+
+                    b.ToTable("Evaluations");
                 });
 
             modelBuilder.Entity("NL_THUD.Models.Person", b =>
@@ -393,6 +386,18 @@ namespace NL_THUD.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<DateTime?>("initialPasswordExpiry")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool?>("isActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool?>("isBlocked")
+                        .HasColumnType("bit");
+
+                    b.Property<bool?>("isDeleted")
+                        .HasColumnType("bit");
+
                     b.HasKey("Id");
 
                     b.HasIndex("NormalizedEmail")
@@ -448,7 +453,7 @@ namespace NL_THUD.Migrations
 
                     b.HasIndex("ScheduleId");
 
-                    b.ToTable("Schedule_Detail");
+                    b.ToTable("Schedule_Details");
                 });
 
             modelBuilder.Entity("NL_THUD.Models.Schedules", b =>
@@ -466,59 +471,90 @@ namespace NL_THUD.Migrations
                     b.ToTable("Schedules");
                 });
 
-            modelBuilder.Entity("NL_THUD.Models.Score", b =>
-                {
-                    b.Property<Guid>("Score_Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<float>("Score_1")
-                        .HasColumnType("real");
-
-                    b.Property<float>("Score_2")
-                        .HasColumnType("real");
-
-                    b.Property<float>("Score_3")
-                        .HasColumnType("real");
-
-                    b.Property<float>("Score_final")
-                        .HasColumnType("real");
-
-                    b.HasKey("Score_Id");
-
-                    b.ToTable("Scores");
-                });
-
             modelBuilder.Entity("NL_THUD.Models.Student_Score", b =>
                 {
-                    b.Property<string>("StudentId")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
 
-                    b.Property<Guid>("ScoreId")
-                        .HasColumnType("uniqueidentifier");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Comment")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("Comment_Expire")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("Comment_UpdateAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double?>("FinalExamScore")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime?>("FinalExamScore_Expire")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FinalExamScore_Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double?>("MidTearmScore")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime?>("MidTermScore_Expire")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("MidTermScore_Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double?>("OralScore")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime?>("OralScore_Expire")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("OralScore_Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double?>("QuizScore")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime?>("QuizScore_Expire")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("QuizScore_Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Semester")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StudentId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<Guid>("SubjectId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("ATId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<double?>("TestScore")
+                        .HasColumnType("float");
 
-                    b.Property<int>("Semester")
-                        .HasColumnType("int");
+                    b.Property<DateTime?>("TestScore_Expire")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("TestScore_Timestamp")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Year")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("StudentId", "ScoreId", "SubjectId", "ATId");
+                    b.HasKey("Id");
 
-                    b.HasIndex("ATId");
-
-                    b.HasIndex("ScoreId");
+                    b.HasIndex("StudentId");
 
                     b.HasIndex("SubjectId");
 
-                    b.ToTable("Student_Score");
+                    b.ToTable("Student_Score", (string)null);
                 });
 
             modelBuilder.Entity("NL_THUD.Models.Subjects", b =>
@@ -556,7 +592,7 @@ namespace NL_THUD.Migrations
 
                     b.HasIndex("Class_Id");
 
-                    b.ToTable("Teacher_Class");
+                    b.ToTable("TeacherClasses");
                 });
 
             modelBuilder.Entity("NL_THUD.Models.Teacher_Subject", b =>
@@ -584,7 +620,7 @@ namespace NL_THUD.Migrations
 
                     b.HasIndex("Teacher_Id");
 
-                    b.ToTable("Teacher_Subject");
+                    b.ToTable("TeacherSubjects");
                 });
 
             modelBuilder.Entity("NL_THUD.Models.Wards", b =>
@@ -616,14 +652,6 @@ namespace NL_THUD.Migrations
                 {
                     b.HasBaseType("NL_THUD.Models.Person");
 
-                    b.Property<string>("ManagementStaff_Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SystemAdmin_Phone")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasDiscriminator().HasValue("ManagementStaff");
                 });
 
@@ -640,7 +668,7 @@ namespace NL_THUD.Migrations
 
                     b.HasIndex("SystemAdminId");
 
-                    b.HasDiscriminator().HasValue("Parents");
+                    b.HasDiscriminator().HasValue("Parent");
                 });
 
             modelBuilder.Entity("NL_THUD.Models.Students", b =>
@@ -650,6 +678,15 @@ namespace NL_THUD.Migrations
                     b.Property<string>("ParentId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Student_Parent_Career")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Student_Parent_Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Student_Parent_Phone")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SystemAdminId")
                         .IsRequired()
@@ -667,7 +704,7 @@ namespace NL_THUD.Migrations
                                 .HasColumnName("Students_SystemAdminId");
                         });
 
-                    b.HasDiscriminator().HasValue("Students");
+                    b.HasDiscriminator().HasValue("Student");
                 });
 
             modelBuilder.Entity("NL_THUD.Models.SystemAdmin", b =>
@@ -684,6 +721,12 @@ namespace NL_THUD.Migrations
                     b.Property<string>("SystemAdminId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool?>("isAdvisor")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("timeAdvisor")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasIndex("SystemAdminId");
 
@@ -747,32 +790,23 @@ namespace NL_THUD.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("NL_THUD.Models.AcademicTranscript", b =>
-                {
-                    b.HasOne("NL_THUD.Models.Teacher", "Teacher")
-                        .WithMany("AcademicTranscript")
-                        .HasForeignKey("TeacherId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Teacher");
-                });
-
             modelBuilder.Entity("NL_THUD.Models.Address", b =>
                 {
                     b.HasOne("NL_THUD.Models.Person", "Person")
                         .WithMany("Addresses")
-                        .HasForeignKey("PersonId");
+                        .HasForeignKey("Person_Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.HasOne("NL_THUD.Models.Provinces", "Provinces")
-                        .WithMany("Addresses")
-                        .HasForeignKey("ProvincesProvince_Id")
+                    b.HasOne("NL_THUD.Models.Wards", "Wards")
+                        .WithMany()
+                        .HasForeignKey("Ward_Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Person");
 
-                    b.Navigation("Provinces");
+                    b.Navigation("Wards");
                 });
 
             modelBuilder.Entity("NL_THUD.Models.Class_Student", b =>
@@ -785,12 +819,10 @@ namespace NL_THUD.Migrations
 
                     b.HasOne("NL_THUD.Models.Schedules", "schedules")
                         .WithMany("Class_Students")
-                        .HasForeignKey("Schedule_Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("Schedule_Id");
 
                     b.HasOne("NL_THUD.Models.Students", "Students")
-                        .WithMany("Class_Students")
+                        .WithMany("ClassStudents")
                         .HasForeignKey("Student_Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -811,6 +843,17 @@ namespace NL_THUD.Migrations
                         .IsRequired();
 
                     b.Navigation("Provinces");
+                });
+
+            modelBuilder.Entity("NL_THUD.Models.Evaluation", b =>
+                {
+                    b.HasOne("NL_THUD.Models.Students", "Student")
+                        .WithMany("Evaluations")
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Student");
                 });
 
             modelBuilder.Entity("NL_THUD.Models.Schedule_Detail", b =>
@@ -834,18 +877,6 @@ namespace NL_THUD.Migrations
 
             modelBuilder.Entity("NL_THUD.Models.Student_Score", b =>
                 {
-                    b.HasOne("NL_THUD.Models.AcademicTranscript", "AcademicTranscript")
-                        .WithMany("StudentScores")
-                        .HasForeignKey("ATId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("NL_THUD.Models.Score", "Score")
-                        .WithMany("student_Scores")
-                        .HasForeignKey("ScoreId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("NL_THUD.Models.Students", "Students")
                         .WithMany("student_Scores")
                         .HasForeignKey("StudentId")
@@ -857,10 +888,6 @@ namespace NL_THUD.Migrations
                         .HasForeignKey("SubjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("AcademicTranscript");
-
-                    b.Navigation("Score");
 
                     b.Navigation("Students");
 
@@ -963,11 +990,6 @@ namespace NL_THUD.Migrations
                     b.Navigation("SystemAdmin");
                 });
 
-            modelBuilder.Entity("NL_THUD.Models.AcademicTranscript", b =>
-                {
-                    b.Navigation("StudentScores");
-                });
-
             modelBuilder.Entity("NL_THUD.Models.Classes", b =>
                 {
                     b.Navigation("Class_Student");
@@ -989,8 +1011,6 @@ namespace NL_THUD.Migrations
 
             modelBuilder.Entity("NL_THUD.Models.Provinces", b =>
                 {
-                    b.Navigation("Addresses");
-
                     b.Navigation("Districts");
                 });
 
@@ -999,11 +1019,6 @@ namespace NL_THUD.Migrations
                     b.Navigation("Class_Students");
 
                     b.Navigation("Schedules_Detail");
-                });
-
-            modelBuilder.Entity("NL_THUD.Models.Score", b =>
-                {
-                    b.Navigation("student_Scores");
                 });
 
             modelBuilder.Entity("NL_THUD.Models.Subjects", b =>
@@ -1023,7 +1038,9 @@ namespace NL_THUD.Migrations
 
             modelBuilder.Entity("NL_THUD.Models.Students", b =>
                 {
-                    b.Navigation("Class_Students");
+                    b.Navigation("ClassStudents");
+
+                    b.Navigation("Evaluations");
 
                     b.Navigation("student_Scores");
                 });
@@ -1039,8 +1056,6 @@ namespace NL_THUD.Migrations
 
             modelBuilder.Entity("NL_THUD.Models.Teacher", b =>
                 {
-                    b.Navigation("AcademicTranscript");
-
                     b.Navigation("TeacherClass");
 
                     b.Navigation("TeacherSubject");

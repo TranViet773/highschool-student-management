@@ -16,7 +16,16 @@ namespace NL_THUD.Data
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(modelBuilder); 
+            base.OnModelCreating(modelBuilder);
+            // Cấu hình kế thừa Table Per Hierarchy (TPH)
+            modelBuilder.Entity<Person>()
+                .HasDiscriminator<string>("Discriminator")
+                .HasValue<Person>("Person")
+                .HasValue<Teacher>("Teacher")
+                .HasValue<Students>("Student")
+                .HasValue<Parents>("Parent")
+                .HasValue<ManagementStaff>("ManagementStaff")
+                .HasValue<SystemAdmin>("SystemAdmin");
 
             // Cấu hình quan hệ One-to-One giữa Students và Parents
             modelBuilder.Entity<Students>()
@@ -24,6 +33,8 @@ namespace NL_THUD.Data
                 .WithOne(p => p.Students)
                 .HasForeignKey<Students>(s => s.ParentId)
                 .OnDelete(DeleteBehavior.Restrict);  // Cấu hình xóa theo cách mong muốn
+
+           
 
             //Cấu hình quan hệ với bảng phujd Teacher_Class
             modelBuilder.Entity<Teacher_Class>()
@@ -42,7 +53,7 @@ namespace NL_THUD.Data
                 .HasKey(cs => new {cs.Student_Id, cs.Class_Id});
             modelBuilder.Entity<Class_Student>()
                 .HasOne(cs => cs.Students)
-                .WithMany(s => s.Class_Students)
+                .WithMany(s => s.ClassStudents)
                 .HasForeignKey(cs => cs.Student_Id);
             modelBuilder.Entity<Class_Student>()
                 .HasOne(cs => cs.Class)
@@ -80,38 +91,43 @@ namespace NL_THUD.Data
                 .HasOne(sd => sd.Schedules)
                 .WithMany(s => s.Schedules_Detail)
                 .HasForeignKey(sd => sd.ScheduleId);
-           
+
             // Cấu hình quan hệ với bảng phụ Student_Score
-            modelBuilder.Entity<Student_Score>()
-                .HasKey(ss => new {ss.StudentId, ss.ScoreId, ss.SubjectId, ss.ATId});
+           
             modelBuilder.Entity<Student_Score>()
                 .HasOne(ss => ss.Students)
                 .WithMany(s => s.student_Scores)
                 .HasForeignKey(ss => ss.StudentId);
-            modelBuilder.Entity<Student_Score>()
-                .HasOne(ss => ss.Score)
-                .WithMany(s => s.student_Scores)
-                .HasForeignKey(ss => ss.ScoreId);
+            
             modelBuilder.Entity<Student_Score>()
                 .HasOne(ss => ss.Subjects)
                 .WithMany(s => s.student_Scores)
                 .HasForeignKey(ss => ss.SubjectId);
-            modelBuilder.Entity<Student_Score>()
-                .HasOne(ss => ss.AcademicTranscript)
-                .WithMany(s => s.StudentScores)
-                .HasForeignKey(ss => ss.ATId);
+           
+            modelBuilder.Entity<Student_Score>().ToTable("Student_Score");
+
+            modelBuilder.Entity<Address>().ToTable("Addresses");
+
         }
         public DbSet<Teacher> Teachers { get; set; }
         public DbSet<Students> Students { get; set; }
         public DbSet<Parents> Parents { get; set; }
         public DbSet<SystemAdmin> SystemAdmins { get; set; }
-        public DbSet<Address> Addressses { get; set; }
+        public DbSet<Address> Addresses { get; set; }
         public DbSet<Provinces> Provinces { get; set; }
         public DbSet<Districts> Districts { get; set; }
         public DbSet<Wards> Wards { get; set; }
-        public DbSet<AcademicTranscript> AcademicTranscripts { get; set; }
-        public DbSet<Score> Scores { get; set; }    
+        public DbSet<Evaluation> Evaluations { get; set; }
+        public DbSet<Subjects> Subjects { get; set; }
         public DbSet<Schedules> Schedules { get; set; }
         public DbSet<ManagementStaff> ManagementStaffs { get; set; }
+        public DbSet<Classes> Classes { get; set; }
+
+        // các thực thể yếu
+        public DbSet<Teacher_Class> TeacherClasses { get; set; }
+        public DbSet<Class_Student> ClassStudents { get; set; }
+        public DbSet<Student_Score> Student_Score { get; set; }
+        public DbSet<Teacher_Subject> TeacherSubjects { get; set; }
+        public DbSet<Schedule_Detail> Schedule_Details { get; set; }
     }
 }

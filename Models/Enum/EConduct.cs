@@ -1,7 +1,8 @@
 ﻿namespace NL_THUD.Models.Enum
 {
-    public enum AcademicTranscript_Performance
+    public enum EConduct
     {
+        NULL,
         GOOD,
         FAIR,
         AVARAGE,

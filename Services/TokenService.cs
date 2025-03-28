@@ -76,8 +76,15 @@ namespace NL_THUD.Services
                 new Claim("Code", user.Code),
                 new Claim("DoB", user.DoB.ToString()),
                 new Claim("Avatar", user.Avatar ?? ""),
+                new Claim("IsActive", user.isActive.ToString()),
+                new Claim("IsBlocked", user.isBlocked.ToString()),
                 new Claim(ClaimTypes.Role, user.ERole.ToString())
             };
+            if (user is Teacher teacher)
+            {
+                claims.Add(new Claim("isAdvisor", teacher.isAdvisor.ToString() ?? ""));
+                claims.Add(new Claim("timeAdvisor", teacher.timeAdvisor ?? ""));
+            }
             return claims;
         }
     }
