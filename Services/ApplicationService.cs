@@ -35,13 +35,18 @@ namespace NL_THUD.Services
 
         public static void ConfigureJwt(this IServiceCollection serviceDescriptors, IConfiguration configuration)
         {
-            var jwtSetting = configuration.GetSection("JwtSetting").Get<JwtSetting>();
-            if (jwtSetting == null || string.IsNullOrEmpty(jwtSetting.SecretKey))
+            //var jwtSetting = configuration.GetSection("JwtSetting").Get<JwtSetting>();
+            //if (jwtSetting == null || string.IsNullOrEmpty(jwtSetting.SecretKey))
+            //{
+            //    throw new InvalidCastException("Jwt secret key is not configured!");
+            //}
+            //var jwtSetting = configuration.GetSection("JwtSetting").Get<JwtSetting>();
+            if (string.IsNullOrEmpty(configuration["SECRET_KEY"]))
             {
                 throw new InvalidCastException("Jwt secret key is not configured!");
             }
 
-            var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSetting.SecretKey)); // SymmetricSecurityKey ký token và xác thực token
+            var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["SECRET_KEY"])); // SymmetricSecurityKey ký token và xác thực token
             serviceDescriptors.AddAuthentication(o =>
             {
                 o.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -54,8 +59,8 @@ namespace NL_THUD.Services
                     ValidateAudience = true,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwtSetting.ValidIssuer,
-                    ValidAudience = jwtSetting.ValidAudience,
+                    ValidIssuer = configuration["VALID_ISSUER"],
+                    ValidAudience = configuration["VALID_AUDIENCE"],
                     IssuerSigningKey = secretKey
                 };
                 o.Events = new JwtBearerEvents

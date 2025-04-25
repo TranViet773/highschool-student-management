@@ -45,7 +45,7 @@ namespace NL_THUD.Services
 
         public async Task<ApiResponse<ScoreBoardResponse>> GetAllScoreInSemester(string studentId, string year, int semester)
         {
-            var subjectScores = await _context.Student_Score.Where(s => s.StudentId == studentId && s.Year == year && s.Semester == semester).ToListAsync();
+            var subjectScores = await _context.Student_Score.Where(s => s.StudentId == studentId && s.Year == year && s.Semester == semester).Include(s => s.Subjects).ToListAsync();
 
             double avg_semester = 0;
             int i = 0;
@@ -75,34 +75,44 @@ namespace NL_THUD.Services
                 response.Grade = 0;
                 response.AVG_Semester_Score = 0;
                 response.Classification = EClassification.NULL;
-                response.Comment = null;
+                response.EConduct = Models.Enum.EConduct.EXCELENT; // ---------------- giả sử
+                var evaluation = await _context.Evaluations.FirstOrDefaultAsync(e => e.StudentId == studentId && e.year == year && e.semester == semester);
+                if(evaluation != null)
+                {
+                    response.Comment = evaluation.Evaluation_Content;
+                }
+                else
+                {
+                    response.Comment = string.Empty;
+                }
             }
             else
             {
                 response.AVG_Semester_Score = avg_semester/i;
                 response.EConduct = Models.Enum.EConduct.GOOD; // ---------------- giả sử
-
-                if (avg_semester >= 8.5)
-                    response.EPerformance = Models.Enum.EPerformance.GOOD;
-                else if (avg_semester >= 7.0)
-                    response.EPerformance = Models.Enum.EPerformance.FAIR;
+                var evaluation = await _context.Evaluations.FirstOrDefaultAsync(e => e.StudentId == studentId && e.year == year && e.semester == semester);
+                response.Comment = evaluation?.Evaluation_Content;
+                if (avg_semester >= 8.0)
+                    response.EPerformance = Models.Enum.EPerformance.EXCELENT; // Xuất sắc
+                else if (avg_semester >= 6.5)
+                    response.EPerformance = Models.Enum.EPerformance.GOOD; // Khá
                 else if (avg_semester >= 5.0)
-                    response.EPerformance = Models.Enum.EPerformance.AVARAGE;
+                    response.EPerformance = Models.Enum.EPerformance.AVARAGE; // Trung bình
                 else
-                    response.EPerformance = Models.Enum.EPerformance.WEAK;
+                    response.EPerformance = Models.Enum.EPerformance.WEAK; // Yếu
 
-                //Classification - Xếp Loại
-                if (response.EPerformance == EPerformance.GOOD && response.EConduct == EConduct.GOOD)
+                // Classification - Xếp Loại
+                if (response.EPerformance == EPerformance.EXCELENT && response.EConduct >= EConduct.GOOD)
+                {
+                    response.Classification = EClassification.EXCELENT;
+                }
+                else if ((response.EPerformance == EPerformance.GOOD && response.EConduct >= EConduct.GOOD) ||
+                         (response.EPerformance == EPerformance.EXCELENT && response.EConduct == EConduct.GOOD))
                 {
                     response.Classification = EClassification.GOOD;
                 }
-                else if ((response.EPerformance == EPerformance.FAIR && response.EConduct >= EConduct.FAIR) ||
-                         (response.EPerformance == EPerformance.GOOD && response.EConduct == EConduct.FAIR))
-                {
-                    response.Classification = EClassification.FAIR;
-                }
                 else if ((response.EPerformance == EPerformance.AVARAGE && response.EConduct >= EConduct.AVARAGE) ||
-                         (response.EPerformance == EPerformance.FAIR && response.EConduct == EConduct.AVARAGE))
+                         (response.EPerformance == EPerformance.GOOD && response.EConduct == EConduct.AVARAGE))
                 {
                     response.Classification = EClassification.AVARAGE;
                 }
@@ -110,14 +120,68 @@ namespace NL_THUD.Services
                 {
                     response.Classification = EClassification.WEAK;
                 }
-            }
 
+            }
+            response.year = year;
+            response.semester = semester;
             return new ApiResponse<ScoreBoardResponse>
             {
                 Code = "200",
                 Message = "Getting score in semester is successful!",
                 Data = response
             };
+        }
+
+        public async Task<ApiResponse<List<ScoreBoardResponse>>> GetAllScoreToPrint(string studentId, int sesmester_start, int sesmester_end, string year_start, string year_end)
+        {
+            List<(string Year, int Semester)> years = GenerateYears(year_start, year_end, sesmester_start, sesmester_end);
+            List<ScoreBoardResponse> scoreBoardResponses = new List<ScoreBoardResponse>();
+            foreach (var e in years) {
+                var responseScoreBoard = await GetAllScoreInSemester(studentId, e.Year, e.Semester);
+                if (responseScoreBoard.Code == "200") {
+                    scoreBoardResponses.Add(responseScoreBoard.Data);
+                }
+            }
+
+            return new ApiResponse<List<ScoreBoardResponse>>
+            {
+                Code = "200",
+                Message = "Getting All Score to print was successful!",
+                Data = scoreBoardResponses
+            };
+
+        }
+
+        public static List<(string Year, int Semester)> GenerateYears(string start, string end, int semesterStart, int semesterEnd)
+        {
+            List<(string, int)> years = new List<(string, int)>();
+            int currentYear = int.Parse(start.Substring(0, 4));
+            int endYear = int.Parse(end.Substring(0, 4));
+            int currentSemester = semesterStart;
+
+            while (currentYear < endYear || (currentYear == endYear) && currentSemester <= semesterEnd)
+            {
+                years.Add(($"{currentYear}-{currentYear + 1}", currentSemester));
+
+                // Chuyển sang học kỳ tiếp theo
+                if (currentSemester == 1)
+                {
+                    currentSemester = 2;
+                }
+                else
+                {
+                    currentSemester = 1;
+                    currentYear++; // Nếu đã đến học kỳ 2, tăng năm lên
+                }
+
+                // Thoát khi đã vượt quá năm kết thúc
+                if (currentYear == endYear && currentSemester > semesterEnd)
+                {
+                    break;
+                }
+            }
+
+            return years;
         }
 
         public async Task<ApiResponse<ScoreOfSubjectResponse>> GetScoreOfSubject(string studentId, string year, int semester, Guid subjecId)
@@ -327,5 +391,37 @@ namespace NL_THUD.Services
                 Data = null
             };
         }
+
+        public async Task<ApiResponse<ResultFinalYear>> GetResultFinalYear(string studentId, string year)
+        {
+            var semester1 = await GetAllScoreInSemester(studentId, year, 1);
+            var semester2 = await GetAllScoreInSemester(studentId, year, 2);
+
+            if(semester1==null || semester2 == null)
+            {
+                return new ApiResponse<ResultFinalYear>
+                {
+                    Code = "404",
+                    Message = "",
+                    Data = null
+                };
+            }
+
+            var response = new ResultFinalYear();
+
+            response.AVG_Semester_Score_Final = (semester1.Data.AVG_Semester_Score + semester2.Data.AVG_Semester_Score) / 2;
+            response.EPerformance_Final = semester2.Data.EPerformance;
+            response.EConduct_Final = semester2.Data.EConduct;
+            response.Classification_Final = semester2.Data.Classification;
+            response.Comment_Final = semester2.Data.Comment;
+            return new ApiResponse<ResultFinalYear>
+            {
+                Code = "200",
+                Message = "",
+                Data = response
+            };
+        }
+
+
     }
 }

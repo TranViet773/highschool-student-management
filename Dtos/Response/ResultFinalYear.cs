@@ -1,0 +1,14 @@
+﻿using NL_THUD.Models.Enum;
+
+namespace NL_THUD.Dtos.Response
+{
+    public class ResultFinalYear
+    {
+        public string Comment_Final { get; set; } // Đánh giá
+        public EPerformance EPerformance_Final { get; set; } //Học lực
+        public double AVG_Semester_Score_Final { get; set; }
+        public int Grade_Final { get; set; } // Hạng
+        public EClassification Classification_Final { get; set; } // Xep loai
+        public EConduct EConduct_Final { get; set; } //Hạnh Kiểm
+    }
+}

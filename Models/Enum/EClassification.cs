@@ -3,8 +3,8 @@
     public enum EClassification
     {
         NULL,
+        EXCELENT,
         GOOD,
-        FAIR,
         AVARAGE,
         WEAK
     }

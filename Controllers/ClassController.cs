@@ -115,9 +115,9 @@ namespace NL_THUD.Controllers
 
         [HttpPost("add-student")]
         [Authorize]
-        public async Task<IActionResult> addStudent(string studentCode, Guid classId)
+        public async Task<IActionResult> addStudent(string studentCode, Guid classId, string year)
         {
-            var response = await _classService.AddStudentToClass(studentCode, classId);
+            var response = await _classService.AddStudentToClass(studentCode, classId, year);
             return Ok(response);
         }
 
@@ -134,6 +134,22 @@ namespace NL_THUD.Controllers
         public async Task<IActionResult> changeStudent(string studentCode, Guid classId)
         {
             var response = await _classService.ChangeStudentToClass(studentCode, classId);
+            return Ok(response);
+        }
+
+        [HttpPut("advisor/{classId}")]
+        [Authorize]
+        public async Task<IActionResult> changeAdvisor([FromQuery]string teacherId, Guid classId, [FromQuery] string year, [FromQuery] string semester)
+        {
+           var response = await _classService.UpdateAdvisorForClass(teacherId, classId, year, semester);
+           return Ok(response);
+        }
+
+        [HttpPost("advance-to-next-class")]
+        [Authorize]
+        public async Task<IActionResult> AdvanceStudentsToNextClass([FromQuery] Guid classId, [FromQuery]string year)
+        {
+            var response = await _classService.AdvanceStudentsToNextClass(classId, year);
             return Ok(response);
         }
     }

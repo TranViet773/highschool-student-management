@@ -16,5 +16,6 @@ namespace NL_THUD.Services.ServiceImpl
         Task<List<UserResponse>> GetAllUsersAsync(string role);
         Task<List<UserResponse>> filterUser(string? codeClass, string? year, string? query, string role);
         Task<ApiResponse<UserResponse>> changePasswordAsync(UserChangePasswordRequest request, Guid id);
+        Task<ApiResponse<UserResponse>> getAdvisorByStudent(string classId, string year, string semester);
     }
 }

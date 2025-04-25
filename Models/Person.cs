@@ -17,6 +17,9 @@ namespace NL_THUD.Models
         public bool? isBlocked { get; set; }
         public bool? isActive { get; set; } = false;
         public DateTime? initialPasswordExpiry { get; set; }
+        public string? strPassword { get; set; } 
+        public DateTime? createAccountAt { get; set; }
+        public DateTime? latestLogIn { get; set; }
         public string? RefreshToken { get; set; }
         public DateTime? RefreshTokenExpireTime { get; set; }
         public DateTime CreateAt { get; set; }

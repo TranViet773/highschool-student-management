@@ -75,9 +75,6 @@ namespace NL_THUD.Controllers
                             return BadRequest($"Dữ liệu không hợp lệ ở cột 6: {value}");
                         }
 
-
-                        
-                       
                         string genderStr = reader.GetValue(4)?.ToString()?.Trim().ToLower();
                         bool gender = genderStr == "nam";
 
@@ -91,6 +88,22 @@ namespace NL_THUD.Controllers
                             case "4": erole = ERole.MANAGERMENT_STAFF; break;
                         }
 
+                        string mom_name = string.Empty;
+                        string mom_career = string.Empty; ;
+                        string dad_name = string.Empty; 
+                        string dad_career = string.Empty;
+                        string phoneNumber = string.Empty;
+                        if (erole == ERole.STUDENT) // truowngf hop cap nhật thông tin Phụ Huynh cho học sinh.
+                        {
+                             mom_name = reader.GetString(10);
+                             mom_career = reader.GetString(11);
+                             dad_name = reader.GetString(8);
+                             dad_career = reader.GetString(9);
+                             phoneNumber = reader.GetString(12);
+                        }
+
+
+
                         UserRegisterRequest userRegisterRequest = new UserRegisterRequest
                         {
                             FirstName = reader.GetString(0),
@@ -100,7 +113,12 @@ namespace NL_THUD.Controllers
                             Gender = gender,
                             Phone = reader.GetString(5),
                             DoB = doB,
-                            ERole = erole
+                            ERole = erole,
+                            Student_Father_Career = dad_career,
+                            Student_Father_Name = dad_name,
+                            Student_Mother_Career = mom_career,
+                            Student_Mother_Name = mom_name,
+                            Student_Parent_Phone = phoneNumber
                         };
 
                         var response = await _userService.RegisterAsync(userRegisterRequest);
@@ -112,7 +130,14 @@ namespace NL_THUD.Controllers
                             }
                             else
                             {
-                                var ClassStudent = await _classService.AddStudentToClass(response.Code, Class.Classes_Id);
+                                string yearSuffix = reader.GetString(7).Substring(reader.GetString(7).Length - 2, 2);
+
+                                int yearShort = int.Parse(yearSuffix);
+                                int startYear = 2000 + yearShort;
+                                int endYear = startYear + 1;
+
+                                string year = $"{startYear}-{endYear}";
+                                var ClassStudent = await _classService.AddStudentToClass(response.Code, Class.Classes_Id, year);
                             }
                         }
                     }

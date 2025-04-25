@@ -22,15 +22,20 @@ namespace NL_THUD.Services
         public TokenService(IConfiguration configuration, UserManager<Person> userManager) {
         
             _userManager = userManager;
+            //var jwtSetting = configuration.GetSection("JwtSetting").Get<JwtSetting>();
+            //if (jwtSetting == null || string.IsNullOrEmpty(jwtSetting.SecretKey)) {
+            //    throw new InvalidOperationException("Jwt secret key is not configured!");
+            //}
             var jwtSetting = configuration.GetSection("JwtSetting").Get<JwtSetting>();
-            if (jwtSetting == null || string.IsNullOrEmpty(jwtSetting.SecretKey)) {
+            
+            if (string.IsNullOrEmpty(configuration["SECRET_KEY"]))
+            {
                 throw new InvalidOperationException("Jwt secret key is not configured!");
             }
-            _SecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSetting.SecretKey));//Dòng này được sử dụng để thiết lập bảo mật khi tạo JWT trong ASP.NET Core.
-            _validAudience = jwtSetting.ValidAudience;
-            _validIssuer = jwtSetting.ValidIssuer;
-            _expires = jwtSetting.Expires;
-
+            _SecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["SECRET_KEY"]));//Dòng này được sử dụng để thiết lập bảo mật khi tạo JWT trong ASP.NET Core.
+            _validAudience = configuration["VALID_AUDIENCE"];
+            _validIssuer = configuration["VALID_ISSUER"];
+            _expires = configuration["EXPIRES"];
         }
 
 

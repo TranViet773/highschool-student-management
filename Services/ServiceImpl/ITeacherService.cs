@@ -8,6 +8,8 @@ namespace NL_THUD.Services.ServiceImpl
         Task<ApiResponse<ClassResponse>> getStudentAndClassByAdvisor(Guid teacherId, string year);
 
         //Task<ApiResponse<ClassResponse>> getStudentAndClassBySubject(string teacherId, string year, string subjectId);
+        Task<ApiResponse<List<AdvisorsInYearResponse>>> getAdvisorsInYear(string year);
+
 
     }
 }

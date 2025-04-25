@@ -3,8 +3,8 @@
     public enum EConduct
     {
         NULL,
+        EXCELENT,
         GOOD,
-        FAIR,
         AVARAGE,
         WEAK
     }

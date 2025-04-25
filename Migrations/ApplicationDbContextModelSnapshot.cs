@@ -222,9 +222,8 @@ namespace NL_THUD.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Classes_Quantity")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("Classes_Quantity")
+                        .HasColumnType("int");
 
                     b.HasKey("Classes_Id");
 
@@ -386,6 +385,9 @@ namespace NL_THUD.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<DateTime?>("createAccountAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime?>("initialPasswordExpiry")
                         .HasColumnType("datetime2");
 
@@ -397,6 +399,12 @@ namespace NL_THUD.Migrations
 
                     b.Property<bool?>("isDeleted")
                         .HasColumnType("bit");
+
+                    b.Property<DateTime?>("latestLogIn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("strPassword")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -480,7 +488,6 @@ namespace NL_THUD.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Comment")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("Comment_Expire")
@@ -679,10 +686,16 @@ namespace NL_THUD.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("Student_Parent_Career")
+                    b.Property<string>("Student_Father_Career")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Student_Parent_Name")
+                    b.Property<string>("Student_Father_Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Student_Mother_Career")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Student_Mother_Name")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Student_Parent_Phone")

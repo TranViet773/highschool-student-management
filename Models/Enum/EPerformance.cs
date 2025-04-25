@@ -3,8 +3,8 @@
     public enum EPerformance
     {
         NULL,
+        EXCELENT,
         GOOD,
-        FAIR,
         AVARAGE,
         WEAK
     }

@@ -1,4 +1,4 @@
-using CloudinaryDotNet;
+﻿using CloudinaryDotNet;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -8,8 +8,20 @@ using NL_THUD.Mapping;
 using NL_THUD.Models;
 using NL_THUD.Services;
 using NL_THUD.Services.ServiceImpl;
+using DotNetEnv;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Load file .env
+DotNetEnv.Env.Load();
+
+builder.Configuration
+    .AddJsonFile("appsettings.json")
+    .AddEnvironmentVariables();  // Đảm bảo đọc ENV Variables
+
+string connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+Console.WriteLine("Chuỗi kết nối: " + Environment.GetEnvironmentVariable("DB_CONNECTION"));
+
 
 // Add services to the container.
 builder.Services.AddHttpContextAccessor();
@@ -52,10 +64,10 @@ builder.Services.AddSwaggerGen(c =>
             new List<string>()
         }
     });
-});
 
+});
 //ApplicationDbContext
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 
 
@@ -70,6 +82,7 @@ builder.Services.AddAutoMapper(typeof(ClassMapper));
 builder.Services.AddAutoMapper(typeof(SubjectMapper));
 builder.Services.AddAutoMapper(typeof(AddressMapper));
 builder.Services.AddAutoMapper(typeof(ScoreMapper));
+builder.Services.AddAutoMapper(typeof(EvaluationMapper));
 
 //Adding services
 builder.Services.AddScoped<IUserService, UserService>();
@@ -82,6 +95,7 @@ builder.Services.AddScoped<ITeacherService, TeacherService>();
 builder.Services.AddScoped<IAddressService, AddressService>();
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 builder.Services.AddScoped<IScoreService, ScoreService>();
+builder.Services.AddScoped<IEvaluationService, EvaluationService>();
 
 
 //Adding JWT token

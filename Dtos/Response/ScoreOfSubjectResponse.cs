@@ -28,6 +28,7 @@ namespace NL_THUD.Dtos.Response
         public string Year { get; set; }
         public int Semester { get; set; }
         public string StudentId { get; set; }
+        public Subjects Subjects { get; set; }
         // Điểm trung bình môn cho học kỳ
         public double? AverageScore => (OralScore + QuizScore + (2 * TestScore) + (2* MidTearmScore)+ (3 * FinalExamScore)) / 9;
         public Guid SubjectId { get; set; }

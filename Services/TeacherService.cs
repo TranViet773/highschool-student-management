@@ -17,6 +17,43 @@ namespace NL_THUD.Services
             this._context = context;
         }
 
+        public async Task<ApiResponse<List<AdvisorsInYearResponse>>> getAdvisorsInYear(string year)
+        {
+            var data = await _context.TeacherClasses
+                        .Where(t => t.Year == year)
+                        .Include(t => t.Teacher)
+                        .Include(t => t.Class)
+                        .ToListAsync();
+            if (data == null)
+            {
+                return new ApiResponse<List<AdvisorsInYearResponse>>
+                {
+                    Code = "404",
+                    Message = "Không tìm thấy chủ nhiệm nào.",
+                    Data = null
+                };
+            }
+
+            var result = data.Select(t => new AdvisorsInYearResponse
+            {
+                FullName = t.Teacher.Fullname,
+                ClassName = t.Class.Classes_Name,
+                Class_Id = t.Class.Classes_Id,
+                ClassCode = t.Class.Classes_Code,
+                year = t.Year,
+                Id = t.Teacher.Id,
+                Code = t.Teacher.Code,
+            }).ToList();
+
+            return new ApiResponse<List<AdvisorsInYearResponse>>
+            {
+                Code = "200",
+                Message = "Lấy danh sách thành công.",
+                Data = result
+            };
+
+        }
+
         public async Task<ApiResponse<ClassResponse>> getStudentAndClassByAdvisor(Guid teacherId, string year)
         {
             var classTeacher = await _context.TeacherClasses.FirstOrDefaultAsync(t => t.Teacher_Id == teacherId.ToString() && t.Year == year);

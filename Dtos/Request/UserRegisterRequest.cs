@@ -14,5 +14,12 @@ namespace NL_THUD.Dtos.Request
         public DateOnly? DoB {  get; set; }
         public ERole ERole { get; set; }
         public Address? Address { get; set; }
+
+        //Student
+        public string? Student_Mother_Name { get; set; }
+        public string? Student_Father_Name { get; set; }
+        public string? Student_Mother_Career { get; set; }
+        public string? Student_Father_Career { get; set; }
+        public string? Student_Parent_Phone { get; set; }
     }
 }

@@ -8,7 +8,12 @@ namespace NL_THUD.Mapping
     public class UserMapping : Profile
     {
         public UserMapping() {
+            // Map từ Person vào UserResponse
             CreateMap<Person, UserResponse>();
+
+            CreateMap<Students, UserResponse>()
+                .IncludeBase<Person, UserResponse>();
+
             CreateMap<Person, CurrentUserResponse>();
             CreateMap<UserRegisterRequest, Person>();
 

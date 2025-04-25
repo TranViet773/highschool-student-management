@@ -13,10 +13,11 @@ namespace NL_THUD.Services.ServiceImpl
         //Task<ApiResponse<ClassResponse>> GetClassByTeacher
         Task<ApiResponse<List<ClassResponse>>> GetClassesByGrade(string grade, string year);
         Task<List<ClassResponse>> GetAllClasses(string year);
-        Task<ApiResponse<String>> AddStudentToClass(string studentCode, Guid classId);
+        Task<ApiResponse<ClassResponse>> AddStudentToClass(string studentCode, Guid classId, string year);
         Task<ApiResponse<String>> DeleteStudentToClass(string studentCode, Guid classCode);
         Task<ApiResponse<String>> ChangeStudentToClass(string studentCode, Guid classId);
 
-
+        Task<ApiResponse<String>> UpdateAdvisorForClass(string teacherId, Guid classId, string year, string semester);
+        Task<ApiResponse<String>> AdvanceStudentsToNextClass(Guid classId, string year);
     }
 }

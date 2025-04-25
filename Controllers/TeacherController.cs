@@ -43,12 +43,22 @@ namespace NL_THUD.Controllers
             return Ok(response);
         }
 
-        //[HttpGet("student/subject/{subjectId}")]
-        //[Authorize]
+        [HttpGet("advisor/{classId}")]
+        [Authorize]
+        public async Task<IActionResult> getAdvisorByStudent(string classId, [FromQuery]string semester, [FromQuery]string year)
+        {
+            var response = await _userService.getAdvisorByStudent(classId, year, semester);
+            return Ok(response);
+        }
 
-        // Score Management
-        
 
-
+        //Lấy danh sách chủ nhiệm các lớp trong một năm học, học kỳ.
+        [HttpGet("advisors/{year}")]
+        [Authorize]
+        public async Task<IActionResult> getAdvisorsInYear(string year)
+        {
+            var response = await _teacherService.getAdvisorsInYear(year);
+            return Ok(response);
+        }
     }
 }

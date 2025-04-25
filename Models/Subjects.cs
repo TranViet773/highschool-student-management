@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace NL_THUD.Models
 {
@@ -10,6 +11,8 @@ namespace NL_THUD.Models
         public List<Teacher_Subject> Teacher_Subjects { get; set; } = new List<Teacher_Subject>();
 
         public List<Schedule_Detail> Schedule_Detail { get; set; } = new List<Schedule_Detail>();
+
+        [JsonIgnore]
         public List<Student_Score> student_Scores { get; set; } = new List<Student_Score>();
 
     }

@@ -70,5 +70,24 @@ namespace NL_THUD.Controllers
             return Ok(response);
 
         }
+
+
+        //Lấy dữ liệu để in bảng điểm:
+        [HttpGet("print")]
+        [Authorize]
+        public async Task<IActionResult> GetAllScoreToPrint([FromQuery]string studentId, [FromQuery] int semesterStart, [FromQuery] int semesterEnd, [FromQuery] string yearStart, [FromQuery] string yearEnd)
+        {
+            var response = await scoreService.GetAllScoreToPrint(studentId, semesterStart, semesterEnd, yearStart, yearEnd);
+            return Ok(response);
+        }
+
+
+        [HttpGet("final-result/{studentId}/{year}")]
+        [Authorize]
+        public async Task<IActionResult> GetResultFinalYear(string studentId, string year)
+        {
+            var response = await scoreService.GetResultFinalYear(studentId, year);
+            return Ok(response);
+        }
     }
 }

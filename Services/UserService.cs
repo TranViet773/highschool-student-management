@@ -92,6 +92,7 @@ namespace NL_THUD.Services
             {
                 var Class = await _context.Classes.FirstOrDefaultAsync(c => c.Classes_Id == ClassStudent.Class_Id);
                 result.ClassCode = Class.Classes_Code;
+                result.ClassId = Class.Classes_Id.ToString();
             }
             return result;
         }
@@ -115,6 +116,7 @@ namespace NL_THUD.Services
             var refreshTokenHashed = sha256.ComputeHash(Encoding.UTF8.GetBytes(refreshToken)); //byte[] 32
             user.RefreshToken = Convert.ToBase64String(refreshTokenHashed); // base64
             user.RefreshTokenExpireTime = DateTime.Now.AddDays(1);
+            user.latestLogIn = DateTime.Now;
             //update Token and Refreshtoken 
             var result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded) {
@@ -128,7 +130,7 @@ namespace NL_THUD.Services
             userResponse.AccessToken = token;
             userResponse.UpdateAt = DateTime.Now;
             userResponse.CreateAt = DateTime.Now;
-            if(user.initialPasswordExpiry > DateTime.Now.AddHours(12) && user.isActive == false) // check xem cái pass 1st còn hiệu lực không, nếu không thì khóa.
+            if(user.initialPasswordExpiry > DateTime.Now && user.isActive == false) // check xem cái pass 1st còn hiệu lực không, nếu không thì khóa.
             {
                 userResponse.isBlocked = true;
             }
@@ -188,7 +190,8 @@ namespace NL_THUD.Services
             newUser.UserName = GenerateUsername(request.FirstName, request.LastName);
             newUser.Code = await GenerateCode(newUser);
             newUser.Fullname = $"{request.LastName} {request.FirstName}";
-            newUser.initialPasswordExpiry = DateTime.Now.AddHours(12); // này là thời gian đổi pass word lần đầu tiên.
+            newUser.initialPasswordExpiry = DateTime.Now.AddDays(12); // này là thời gian đổi pass word lần đầu tiên.
+            newUser.createAccountAt = DateTime.Now;
             // Tạo user trong database  
             var result = await _userManager.CreateAsync(newUser, request.Password);
             if (!result.Succeeded)
@@ -390,7 +393,7 @@ namespace NL_THUD.Services
             {
                 case "STUDENT": eRole = ERole.STUDENT; tmp = $"HS{preYear}"; break;
                 case "TEACHER": eRole = ERole.TEACHER; tmp = $"GV{preYear}"; break;
-                case "MANAGEMENT_STAFF": eRole = ERole.MANAGERMENT_STAFF; tmp = $"NV{preYear}"; break;
+                case "MANAGERMENT_STAFF": eRole = ERole.MANAGERMENT_STAFF; tmp = $"NV{preYear}"; break;
             }
 
             var isNumber = query != null && query.Length >= 4 && char.IsDigit(query[2]) && char.IsDigit(query[3]);
@@ -477,6 +480,39 @@ namespace NL_THUD.Services
                 };
 
             }
+        }
+
+        public async Task<ApiResponse<UserResponse>> getAdvisorByStudent(string classId, string year, string semester)
+        {
+            var teacherClass = await _context.TeacherClasses.FirstOrDefaultAsync(t => t.Year == year && t.Semester == semester & t.Class_Id.ToString() == classId);
+            if(teacherClass is null)
+            {
+                return new ApiResponse<UserResponse>
+                {
+                    Code = "404",
+                    Message = "TeacherClass was not found!",
+                    Data = null
+                };
+            }
+
+            var advisor = await _context.Teachers.FirstOrDefaultAsync(t => t.Id == teacherClass.Teacher_Id);
+            if (advisor is null)
+            {
+                return new ApiResponse<UserResponse>
+                {
+                    Code = "404",
+                    Message = "Advisor was not found!",
+                    Data = null
+                };
+            }
+
+            return new ApiResponse<UserResponse>
+            {
+                Code = "200",
+                Message = "Getting Advisor was successful!",
+                Data = _mapper.Map<UserResponse>(advisor)
+            };
+
         }
     }
 }

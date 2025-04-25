@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace NL_THUD.Models
 {
@@ -37,6 +38,8 @@ namespace NL_THUD.Models
         public Students Students { get; set; }
 
         public Guid SubjectId { get; set; }
+
+        [JsonIgnore]
         public Subjects Subjects { get; set; }
     }
 }

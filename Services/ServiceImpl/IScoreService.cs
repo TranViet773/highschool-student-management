@@ -1,4 +1,5 @@
-﻿using NL_THUD.Dtos.Request;
+﻿using Microsoft.AspNetCore.Mvc;
+using NL_THUD.Dtos.Request;
 using NL_THUD.Dtos.Response;
 
 namespace NL_THUD.Services.ServiceImpl
@@ -25,7 +26,11 @@ namespace NL_THUD.Services.ServiceImpl
 
         //Cập nhật điểm từng môn, từng cột điểm cho tất cả học sinh thuộc một lớp(giảng dạy).  
         // Score = [{idstudent, score}]
-        Task<ApiResponse<ScoreOfSubjectResponse>> UpdateSubjectScoreByColumn(Guid subjectId, string year, int semester, IEnumerable<ScoreByColumnRequest> scores); 
+        Task<ApiResponse<ScoreOfSubjectResponse>> UpdateSubjectScoreByColumn(Guid subjectId, string year, int semester, IEnumerable<ScoreByColumnRequest> scores);
+
+        Task<ApiResponse<List<ScoreBoardResponse>>> GetAllScoreToPrint(string studentId, int sesmester_start, int sesmester_end, string year_start, string year_end);
+
+        Task<ApiResponse<ResultFinalYear>> GetResultFinalYear(string studentId, string year);
 
     }
 }

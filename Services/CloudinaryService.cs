@@ -9,14 +9,20 @@ namespace NL_THUD.Services
     public class CloudinaryService : ICloudinaryService
     {
         private readonly Cloudinary _cloudinary;
-        public CloudinaryService(IOptions<CloudinarySettings> config)
+        private IConfiguration _configuration;
+        public CloudinaryService(IOptions<CloudinarySettings> config, IConfiguration configuration)
         {
+            _configuration = configuration;
             var acc = new Account(
-                config.Value.CloudName,
-                config.Value.ApiKey,
-                config.Value.ApiSecret
+                //config.Value.CloudName,
+                //config.Value.ApiKey,
+                //config.Value.ApiSecret
+                _configuration["CLOUD_NAME"],
+                _configuration["API_KEY"],
+                _configuration["API_SCERET"]
             );
             _cloudinary = new Cloudinary(acc);
+           
         }
 
         public async Task<DeletionResult> DeleteImageAsync(string publicId)
