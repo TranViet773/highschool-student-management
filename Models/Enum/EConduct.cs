@@ -3,9 +3,9 @@
     public enum EConduct
     {
         NULL,
-        EXCELENT,
-        GOOD,
+        WEAK,
         AVARAGE,
-        WEAK
+        GOOD,
+        EXCELENT
     }
 }

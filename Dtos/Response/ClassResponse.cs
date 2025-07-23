@@ -1,4 +1,6 @@
-﻿namespace NL_THUD.Dtos.Response
+﻿using NL_THUD.Models;
+
+namespace NL_THUD.Dtos.Response
 {
     public class ClassResponse
     {
@@ -11,6 +13,7 @@
         public string Year {  get; set; }
         public string Semester { get; set; }
         public bool? Classes_IdDeleted {  get; set; }
+        public string CLasses_NextClassId { get; set; }
         public string? advisor {  get; set; }
         public List<UserResponse>? Students { get; set; }
 

@@ -14,12 +14,12 @@ namespace NL_THUD.Services
         {
             _configuration = configuration;
             var acc = new Account(
-                //config.Value.CloudName,
-                //config.Value.ApiKey,
-                //config.Value.ApiSecret
-                _configuration["CLOUD_NAME"],
-                _configuration["API_KEY"],
-                _configuration["API_SCERET"]
+                config.Value.CloudName,
+                config.Value.ApiKey,
+                config.Value.ApiSecret
+                //_configuration["CLOUD_NAME"],
+                //_configuration["API_KEY"],
+                //_configuration["API_SCERET"]
             );
             _cloudinary = new Cloudinary(acc);
            

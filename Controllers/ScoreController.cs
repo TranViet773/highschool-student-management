@@ -24,6 +24,14 @@ namespace NL_THUD.Controllers
             return Ok(response);
         }
 
+        [HttpPost("scoreboard/{subjectId}")]
+        [Authorize]
+        public async Task<IActionResult> InitializeScoreForSubject(string studentId, string year, int semester, string subjectId)
+        {
+            var response = await scoreService.InitializeScoreBoardForSubject(studentId, year, semester, subjectId);
+            return Ok(response);
+        }
+
         //Lấy điểm 1 môn của một hs
         [HttpGet("subject/{studentId}")]
         [Authorize]
@@ -34,7 +42,7 @@ namespace NL_THUD.Controllers
         }
 
         [HttpGet("semester/{semester}")]
-        [Authorize]
+        [Authorize] 
         public async Task<IActionResult> GetScoreInSemester([FromQuery] string studentId, [FromQuery]string year, int semester)
         {
             var response = await scoreService.GetAllScoreInSemester(studentId, year, semester);
@@ -71,7 +79,6 @@ namespace NL_THUD.Controllers
 
         }
 
-
         //Lấy dữ liệu để in bảng điểm:
         [HttpGet("print")]
         [Authorize]
@@ -89,5 +96,41 @@ namespace NL_THUD.Controllers
             var response = await scoreService.GetResultFinalYear(studentId, year);
             return Ok(response);
         }
+
+        [HttpGet("statistical-avgscore/{studentId}/{year}")]
+        //[Authorize]
+        public async Task<IActionResult> StatisticalAvgSubject(string studentId, string year)
+        {
+            var response = await scoreService.StatisticalAvgSubject(studentId, year);
+            return Ok(response);
+        }
+
+        //Lấy ra để xuất excel
+        [HttpGet("score-all-student/{classId}")]
+        //[Authorize]
+        public async Task<IActionResult> GetScoreBoardAllStudentOfClassInSemester(string classId,[FromQuery] string year, [FromQuery] int semester)
+        {
+            var response = await scoreService.getScoreBoardStudent(classId, semester, year);
+            return Ok(response);
+        }
+
+
+        [HttpGet("final-result-class/{classId}")]
+        //[Authorize]
+        public async Task<IActionResult> GetFinalResultStudentsInClass(string classId, [FromQuery] string year, [FromQuery] int semester = 0)
+        {
+            var response = await scoreService.GetFinalResultStudentsInClass(classId, semester, year);
+            return Ok(response);
+        }
+
+        [HttpGet("ratio-score/{classId}/subject/{subjectId}")]
+        //[Authorize]
+        public async Task<IActionResult> GetScoreRatioOfClass(string classId, Guid subjectId, [FromQuery] string year, [FromQuery] int semester = 0)
+        {
+            var response = await scoreService.GetScoreRatioOfClass(classId, semester, year, subjectId);
+            return Ok(response);
+        }
+
+
     }
 }

@@ -70,7 +70,7 @@ namespace NL_THUD.Services
             return _mapper.Map<CurrentUserResponse>(user);
         }
 
-        public async Task<UserResponse> GetUserByIdAsync(Guid id)
+        public async Task<UserResponse> GetUserByIdAsync(Guid id, string year)
         {
             var user = await _userManager.FindByIdAsync(id.ToString());
             if (user == null)
@@ -78,7 +78,7 @@ namespace NL_THUD.Services
                 _logger.LogError("User not found!");
                 throw new Exception("User not found!");
             }
-            var year = $"{DateTime.Now.Year}-{DateTime.Now.Year + 1}";
+            ///var year = $"{DateTime.Now.Year}-{DateTime.Now.Year + 1}";
 
             var result = _mapper.Map<UserResponse>(user);
             Guid userId = Guid.Parse(user.Id);
@@ -188,7 +188,7 @@ namespace NL_THUD.Services
 
             // Gán các thuộc tính chung
             newUser.UserName = GenerateUsername(request.FirstName, request.LastName);
-            newUser.Code = await GenerateCode(newUser);
+            newUser.Code = await GenerateCode(newUser, request.year);
             newUser.Fullname = $"{request.LastName} {request.FirstName}";
             newUser.initialPasswordExpiry = DateTime.Now.AddDays(12); // này là thời gian đổi pass word lần đầu tiên.
             newUser.createAccountAt = DateTime.Now;
@@ -210,10 +210,9 @@ namespace NL_THUD.Services
         }
 
 
-        public async Task<string> GenerateCode(Person user)
+        public async Task<string> GenerateCode(Person user, string year)
         {
-            var year = DateTime.Now.Year.ToString();
-            var preYear = year.Substring(2, 2); // Lấy "24" thay vì "2024"
+            var preYear = year.Substring(2, 2); // VD: "2024" -> "24"
 
             // Xác định tiền tố theo vai trò
             string prefix = user.ERole switch
@@ -226,29 +225,32 @@ namespace NL_THUD.Services
                 _ => throw new ArgumentException("Vai trò không hợp lệ")
             };
 
-            // Lấy mã cao nhất hiện có
-            var currentCode = await _userManager.Users
-                .Where(u => u.ERole == user.ERole)
-                .MaxAsync(x => x.Code);
+            string fullPrefix = $"{prefix}{preYear}"; // VD: HS24
 
-            if (string.IsNullOrEmpty(currentCode))
+            // Lọc mã theo vai trò + năm trước khi lấy max
+            var maxCode = await _userManager.Users
+                .Where(u => u.ERole == user.ERole && u.Code.StartsWith(fullPrefix))
+                .Select(u => u.Code)
+                .OrderByDescending(code => code)
+                .FirstOrDefaultAsync();
+
+            if (string.IsNullOrEmpty(maxCode))
             {
-                return $"{prefix}{preYear}0001"; // Mã đầu tiên
+                return $"{fullPrefix}0001"; // Mã đầu tiên cho vai trò + năm đó
             }
 
-            // Tách số từ mã hiện có
-            Match match = Regex.Match(currentCode, @"(\D+)(\d+)");
+            // Tách số từ mã
+            Match match = Regex.Match(maxCode, @"(\D+)(\d+)");
             if (match.Success)
             {
-                string oldPrefix = match.Groups[1].Value; // "HS24"
-                int number = int.Parse(match.Groups[2].Value); // 0001
-
-                number++; // Tăng số lên 1
-                return $"{oldPrefix}{number:D4}"; // Định dạng lại số: 0002 -> 0003
+                int number = int.Parse(match.Groups[2].Value);
+                number++;
+                return $"{fullPrefix}{number:D4}"; // Tạo mã mới dạng HS240002
             }
 
             throw new InvalidOperationException("Mã hiện tại không đúng định dạng");
         }
+
 
         public string GenerateUsername(string FirstName, string LastName)
         {
@@ -382,55 +384,81 @@ namespace NL_THUD.Services
 
         public async Task<List<UserResponse>> filterUser(string? codeClass, string? year, string? query, string role)
         {
-            var eRole = ERole.STUDENT;
-            if (string.IsNullOrEmpty(year))
-            {
-                year = DateTime.Now.Year.ToString();
-            }
+            year ??= DateTime.Now.Year.ToString();
             var preYear = year.Substring(2, 2);
-            string tmp = "";
-            switch (role)
+
+            // Parse role
+            var eRole = Enum.TryParse<ERole>(role, out var parsedRole) ? parsedRole : ERole.STUDENT;
+
+            // Prefix theo role
+            string prefix = role switch
             {
-                case "STUDENT": eRole = ERole.STUDENT; tmp = $"HS{preYear}"; break;
-                case "TEACHER": eRole = ERole.TEACHER; tmp = $"GV{preYear}"; break;
-                case "MANAGERMENT_STAFF": eRole = ERole.MANAGERMENT_STAFF; tmp = $"NV{preYear}"; break;
+                "STUDENT" => $"HS",
+                "TEACHER" => $"GV{preYear}",
+                "MANAGERMENT_STAFF" => $"NV{preYear}",
+                _ => ""
+            };
+
+            // Query gốc
+            var usersQuery = _userManager.Users
+                .Where(u => u.ERole == eRole);
+
+            // Nếu có year → lọc theo prefix code
+            if (!string.IsNullOrEmpty(year))
+            {
+                usersQuery = usersQuery.Where(u => u.Code.StartsWith(prefix));
             }
 
-            var isNumber = query != null && query.Length >= 4 && char.IsDigit(query[2]) && char.IsDigit(query[3]);
-
-            var result = await _userManager.Users
-                .Where(u => u.ERole == eRole)
-                .Where(u => u.Code.Length >= 4 && u.Code.Substring(0, 4) == tmp)
-                .ToListAsync();
-
+            // Nếu có query → lọc theo Code hoặc Fullname
             if (!string.IsNullOrEmpty(query))
             {
-                result = result.Where(u => isNumber ? u.Code == query : u.Fullname.Contains(query)).ToList();
+                usersQuery = usersQuery.Where(u =>
+                    u.Code.Contains(query) || u.Fullname.Contains(query));
             }
 
-            
+            var users = await usersQuery.ToListAsync();
+
+            // Nếu có codeClass → lọc theo lớp học
             if (!string.IsNullOrEmpty(codeClass))
             {
-                var classEntity = await _context.Classes.FirstOrDefaultAsync(u => u.Classes_Code == codeClass);
-                result = await _context.Students.Where(s => s.ClassStudents.Any(cs => cs.Class_Id == classEntity.Classes_Id)).Cast<Person>().ToListAsync();
-               
-            }
-
-            var mappedResult = _mapper.Map<List<UserResponse>>(result);
-            foreach (var user in mappedResult)
-            {
-                var classStudent = await _context.ClassStudents.FirstOrDefaultAsync(u => u.Student_Id == user.Id.ToString() && u.Year == year);
-                if (classStudent != null)
+                var classEntity = await _context.Classes.FirstOrDefaultAsync(c => c.Classes_Code == codeClass);
+                if (classEntity != null)
                 {
-                    var Class = await _context.Classes.FirstOrDefaultAsync(c => c.Classes_Id == classStudent.Class_Id);
-                    if (Class != null)
-                    {
-                        user.ClassCode = Class.Classes_Code;
-                    }
+                    var studentIdsInClass = await _context.ClassStudents
+                        .Where(cs => cs.Class_Id == classEntity.Classes_Id)
+                        .Select(cs => cs.Student_Id)
+                        .ToListAsync();
+
+                    users = users.Where(u => studentIdsInClass.Contains(u.Id.ToString())).ToList();
                 }
             }
+
+            // Lấy dữ liệu ClassStudents (lọc theo năm)
+            var userIds = users.Select(u => u.Id.ToString()).ToList();
+            var classStudentMap = await _context.ClassStudents
+                .Where(cs => userIds.Contains(cs.Student_Id) && cs.Year == year)
+                .ToListAsync();
+
+            // Lấy danh sách lớp tương ứng
+            var classIds = classStudentMap.Select(cs => cs.Class_Id).Distinct().ToList();
+            var classDict = await _context.Classes
+                .Where(c => classIds.Contains(c.Classes_Id))
+                .ToDictionaryAsync(c => c.Classes_Id, c => c.Classes_Code);
+
+            // Map kết quả + gán ClassCode
+            var mappedResult = _mapper.Map<List<UserResponse>>(users);
+            foreach (var user in mappedResult)
+            {
+                var cs = classStudentMap.FirstOrDefault(c => c.Student_Id == user.Id.ToString());
+                if (cs != null && classDict.TryGetValue(cs.Class_Id, out var code))
+                {
+                    user.ClassCode = code;
+                }
+            }
+
             return mappedResult;
         }
+
 
         public async Task<ApiResponse<UserResponse>> changePasswordAsync(UserChangePasswordRequest request, Guid id)
         {
@@ -513,6 +541,78 @@ namespace NL_THUD.Services
                 Data = _mapper.Map<UserResponse>(advisor)
             };
 
+        }
+
+        public async Task<ApiResponse<UserResponse>> BlockAndUnblockUser(string userId)
+        {
+            try
+            {
+                var user = await _userManager.FindByIdAsync(userId);
+                Console.WriteLine("User: " + user?.UserName);
+
+                if (user == null)
+                {
+                    return new ApiResponse<UserResponse>
+                    {
+                        Code = "404",
+                        Message = "User not found!",
+                        Data = null
+                    };
+                }
+
+                user.isBlocked = user.isBlocked == null ? true : !user.isBlocked;
+
+                var result = await _userManager.UpdateAsync(user);
+
+                if (!result.Succeeded)
+                {
+                    return new ApiResponse<UserResponse>
+                    {
+                        Code = "400",
+                        Message = "Failed to update user status",
+                        Data = null
+                    };
+                }
+
+                return new ApiResponse<UserResponse>
+                {
+                    Code = "200",
+                    Message = "Success",
+                    Data = _mapper.Map<UserResponse>(user)
+                };
+            }
+            catch (Exception e)
+            {
+                return new ApiResponse<UserResponse>
+                {
+                    Code = "500",
+                    Message = $"An error occurred: {e.Message}",
+                    Data = null
+                };
+            }
+        }
+
+        public async Task<ApiResponse<UserResponse>> SetActiveUser(string userId)
+        {
+            var user = _userManager.Users.FirstOrDefault(u => u.Id == userId);
+            if (user is null)
+            {
+                return new ApiResponse<UserResponse>
+                {
+                    Code = "404",
+                    Message = "User not found!",
+                    Data = null
+                };
+            }
+
+            user.isActive = !user.isActive; // Toggle the isBlocked status
+            var result = _userManager.UpdateAsync(user);
+            return new ApiResponse<UserResponse>
+            {
+                Code = result.IsCompletedSuccessfully ? "200" : "500",
+                Message = result.IsCompletedSuccessfully ? "User status updated successfully!" : "Failed to update user status!",
+                Data = _mapper.Map<UserResponse>(user)
+            };
         }
     }
 }

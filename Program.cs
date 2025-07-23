@@ -20,7 +20,6 @@ builder.Configuration
     .AddEnvironmentVariables();  // Đảm bảo đọc ENV Variables
 
 string connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-Console.WriteLine("Chuỗi kết nối: " + Environment.GetEnvironmentVariable("DB_CONNECTION"));
 
 
 // Add services to the container.
@@ -83,6 +82,7 @@ builder.Services.AddAutoMapper(typeof(SubjectMapper));
 builder.Services.AddAutoMapper(typeof(AddressMapper));
 builder.Services.AddAutoMapper(typeof(ScoreMapper));
 builder.Services.AddAutoMapper(typeof(EvaluationMapper));
+builder.Services.AddAutoMapper(typeof(ReevaluationMapper));
 
 //Adding services
 builder.Services.AddScoped<IUserService, UserService>();
@@ -96,6 +96,9 @@ builder.Services.AddScoped<IAddressService, AddressService>();
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 builder.Services.AddScoped<IScoreService, ScoreService>();
 builder.Services.AddScoped<IEvaluationService, EvaluationService>();
+builder.Services.AddScoped<IAttendanceService, AttendanceService>();
+builder.Services.AddScoped<IReevaluationService, ReevaluationService>();
+builder.Services.AddScoped<IStatisticalAndReport, StatisticalAndReportService>();
 
 
 //Adding JWT token

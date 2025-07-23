@@ -62,7 +62,7 @@ namespace NL_THUD.Services
             return new JwtSecurityToken(
                     issuer: _validIssuer,
                     audience: _validAudience,
-                    expires: DateTime.Now.AddMinutes(120),
+                    expires: DateTime.Now.AddMinutes(int.Parse(_expires)),
                     signingCredentials: signingCredentials,
                     claims: claims
                 );

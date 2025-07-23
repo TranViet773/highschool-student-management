@@ -7,6 +7,7 @@
         public string Email { get; set; }
         public bool Gender { get; set; }
         public string AccessToken { get; set; }
+        public string RefreshToken { get; set; }
         public DateTime CreateAt { get; set; }
         public DateTime UpdateAt { get; set; }
     }

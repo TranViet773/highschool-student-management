@@ -15,7 +15,6 @@ namespace NL_THUD.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-
         private readonly IUserService _userService;
         private readonly IClassService _classService;
         public AuthController(IUserService userService, IClassService classService)
@@ -174,9 +173,9 @@ namespace NL_THUD.Controllers
 
         [HttpGet("user/{id}")]
         [Authorize]
-        public async Task<IActionResult> GetUserById(Guid id)
+        public async Task<IActionResult> GetUserById(Guid id, [FromQuery]string year)
         {
-            var response = await _userService.GetUserByIdAsync(id);
+            var response = await _userService.GetUserByIdAsync(id, year);
             return Ok(response);
         }
 
@@ -218,6 +217,8 @@ namespace NL_THUD.Controllers
             var response = await _userService.changePasswordAsync(request, id);
             return Ok(response);
         }
+
+        //[HttpPut]
 
         //UpdateUser
     }

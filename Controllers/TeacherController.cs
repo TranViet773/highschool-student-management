@@ -34,6 +34,14 @@ namespace NL_THUD.Controllers
             return Ok(response);
         }
 
+        [HttpGet("advisor/{teacherId}/class/student")]
+        [Authorize]
+        public async Task<IActionResult> getListClassAndStudentByAdvisor(string teacherId)
+        {
+            var response = await _teacherService.getListStudentAndClassByAdvisor(teacherId);
+            return Ok(response);
+        }
+
         //Update infor student
         [HttpPut("update-student/{id}")]
         [Authorize]
@@ -58,6 +66,15 @@ namespace NL_THUD.Controllers
         public async Task<IActionResult> getAdvisorsInYear(string year)
         {
             var response = await _teacherService.getAdvisorsInYear(year);
+            return Ok(response);
+        }
+
+        //GetTimeLine - Advisor, Teaching.
+        [HttpGet("teaching/timeline/{teacherId}")]
+        //[Authorize]
+        public async Task<IActionResult> getTimeLineTeaching(string teacherId)
+        {
+            var response = await _teacherService.getTimeLineTeaching(teacherId);
             return Ok(response);
         }
     }

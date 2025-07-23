@@ -71,44 +71,53 @@ namespace NL_THUD.Services
 
         public async Task<ApiResponse<ClassResponse>> AddStudentToClass(string studentCode, Guid classId, string year)
         {
-            var student = await _context.Users.OfType<Students>().FirstOrDefaultAsync(s => s.Code == studentCode);
-            var isBelongClass = await _context.ClassStudents.AnyAsync(c => c.Student_Id == student.Id && c.Year == year);
-            if (isBelongClass)
+            try
             {
+                var student = await _context.Users.OfType<Students>().FirstOrDefaultAsync(s => s.Code == studentCode);
+                var isBelongClass = await _context.ClassStudents.AnyAsync(c => c.Student_Id == student.Id && c.Year == year);
+                if (isBelongClass)
+                {
+                    return new ApiResponse<ClassResponse>
+                    {
+                        Code = "500",
+                        Message = $"Học sinh có mã số {studentCode} đang tồn tại trong lớp khác trong năm học {year}!",
+                        Data = null,
+                    };
+                }
+                var Class = await _context.Classes.FirstOrDefaultAsync(c => c.Classes_Id == classId);
+                //var year = $"{DateTime.Now.Year}-{DateTime.Now.Year + 1}";
+                var result = new Class_Student
+                {
+                    Class_Id = classId,
+                    Student_Id = student.Id,
+                    Year = year
+                };
+
+                Class.Classes_Quantity += 1;
+                await _context.ClassStudents.AddAsync(result);
+                await _context.SaveChangesAsync();
+                return new ApiResponse<ClassResponse>
+                {
+                    Code = "200",
+                    Message = "Successfully!",
+                    Data = null
+                };
+            }catch(Exception e)
+            {
+                Console.Write("Lỗi khi thêm học sinh vào lớp: ", e.Message);
                 return new ApiResponse<ClassResponse>
                 {
                     Code = "500",
-                    Message = "Student is belong to another class!",
-                    Data = null,
+                    Message = "Có lỗi khi thêm học sinh vào lớp.",
+                    Data = null
                 };
             }
-            var Class = await _context.Classes.FirstOrDefaultAsync(c => c.Classes_Id == classId);
-            //var year = $"{DateTime.Now.Year}-{DateTime.Now.Year + 1}";
-            var result = new Class_Student
-            {
-                Class_Id = classId,
-                Student_Id = student.Id,
-                Year = year
-            };
-            Class.Classes_Quantity += 1;
-            await _context.ClassStudents.AddAsync(result);
-            await _context.SaveChangesAsync();
-            return new ApiResponse<ClassResponse>
-            {
-                Code = "200",
-                Message = "Successfully!",
-                Data = null
-            };
 
         }
 
-        public async Task<ApiResponse<string>> ChangeStudentToClass(string studentCode, Guid classId)
+        public async Task<ApiResponse<string>> ChangeStudentToClass(string studentCode, Guid classId, string year)
         {
-            
-            
-
             var student = await _context.Students.FirstOrDefaultAsync(s => s.Code == studentCode);
-            var year = $"{DateTime.Now.Year}-{DateTime.Now.Year + 1}";
             var classStudent = new Class_Student();
             classStudent = await _context.ClassStudents.FirstOrDefaultAsync(u => u.Year == year && u.Student_Id == student.Id);
             if (classStudent != null)
@@ -238,20 +247,24 @@ namespace NL_THUD.Services
             };
         }
 
-        public async Task<ApiResponse<List<ClassResponse>>> GetClassByTeacher(string teacherId, string year, string semester)
+        public async Task<ApiResponse<List<ClassResponse>>> GetClassByTeacher(string teacherId, string? year, string? semester)
         {
-           var teaching =  _context.TeacherSubjects.Where(t => t.Year == year && t.Semester == semester && t.Teacher_Id == teacherId)
-                .Select(
-                    t => new ClassResponse
-                    {
-                        Classes_Id = t.Classes.Classes_Id,
-                        Classes_Name = t.Classes.Classes_Name,
-                        Subject_Name = t.Subjects.Subject_Name,
-                        Subject_Id = t.Subjects.Subject_Id.ToString(),
-                        Year = year,
-                        Semester = semester
-                    }
-               ).ToList();
+            var teaching = await _context.TeacherSubjects
+                 .Where(t =>
+                     (year != null ? t.Year == year : true) &&
+                     (semester != null ? t.Semester == semester : true) &&
+                     t.Teacher_Id == teacherId)
+                 .Select(t => new ClassResponse
+                 {
+                     Classes_Id = t.Classes.Classes_Id,
+                     Classes_Name = t.Classes.Classes_Name,
+                     Subject_Name = t.Subjects.Subject_Name,
+                     Subject_Id = t.Subjects.Subject_Id.ToString(),
+                     Year = t.Year,
+                     Semester = t.Semester
+                 })
+                 .ToListAsync(); 
+
             Console.WriteLine("Teaching: " + teaching);
             if (!teaching.Any()) {
                 _logger.LogError("Teaching rỗng");
@@ -283,7 +296,7 @@ namespace NL_THUD.Services
                 };
             }
 
-            var teacherClass = await _context.TeacherClasses.FirstOrDefaultAsync(t => t.Class_Id == classId);
+            var teacherClass = await _context.TeacherClasses.FirstOrDefaultAsync(t => t.Class_Id == classId); // Check lại
             if (teacherClass != null)
             {
                 _context.TeacherClasses.Remove(teacherClass);
@@ -306,53 +319,311 @@ namespace NL_THUD.Services
             };
         }
 
-        public async Task<ApiResponse<string>> AdvanceStudentsToNextClass(Guid classId, string year)
+        public async Task<ApiResponse<string>> AdvanceStudentsToNextClass(Guid oldClassId, Guid newClassId, string year)
         {
-            var classData = await _context.Classes.FirstOrDefaultAsync(c => c.Classes_Id == classId);  
-            
-            var listStudentId = await _context.ClassStudents //List<Guid>
-                .Where(s => s.Class_Id==classId && s.Year==year)
-                .Include(s => s.Students)
-                .Select(s => s.Students.Code).ToListAsync();
-
-            int prefixClass = int.Parse(classData?.Classes_Name.Substring(0, 2));
-            string suffixClass = classData.Classes_Name.Substring(2,2);
-            string y = $"{int.Parse(year.Substring(0, 4))+1}-{int.Parse(year.Substring(5, 4))+1}";//2025-2026
-            var createClassRequest = new ClassRequest
+            try
             {
-                Classes_Name = $"{prefixClass + 1}{suffixClass}",
-                Year = y
-            };
-            var data = await AddClass(createClassRequest);
-            if(data == null)
+                var existingOldClass = await _context.Classes.FirstOrDefaultAsync(c => c.Classes_Id == oldClassId);
+                if(existingOldClass == null)
+                {
+                    return new ApiResponse<string>
+                    {
+                        Code = "404",
+                        Message = "Id lớp cũ không tồn tại!",
+                        Data = null
+                    };
+                }
+
+                var existingNewClass = await _context.Classes.FirstOrDefaultAsync(c => c.Classes_Id == newClassId);
+                if (existingNewClass == null)
+                {
+                    return new ApiResponse<string>
+                    {
+                        Code = "404",
+                        Message = "Id lớp mới không tồn tại!",
+                        Data = null
+                    };
+                }
+
+                // Lấy danh sách mã học sinh từ lớp cũ theo năm học
+                var studentCodes = await _context.ClassStudents
+                    .Where(cs => cs.Class_Id == oldClassId && cs.Year == year)
+                    .Select(cs => cs.Students.Code)
+                    .ToListAsync();
+
+                if (studentCodes == null || studentCodes.Count == 0)
+                {
+                    return new ApiResponse<string>
+                    {
+                        Code = "404",
+                        Message = "Không tìm thấy học sinh trong lớp cũ",
+                        Data = null
+                    };
+                }
+
+                // Xác định năm kế tiếp
+                var yearParts = year.Split('-');
+                if (yearParts.Length != 2 || !int.TryParse(yearParts[0], out int startYear))
+                {
+                    return new ApiResponse<string>
+                    {
+                        Code = "400",
+                        Message = "Năm học không hợp lệ",
+                        Data = null
+                    };
+                }
+
+                string nextYear = $"{startYear + 1}-{startYear + 2}";
+
+                // Thêm từng học sinh vào lớp mới
+                foreach (var studentCode in studentCodes)
+                {
+                    try
+                    {
+                        var isPassedClass = await _context.Evaluations.FirstOrDefaultAsync(e => e.Student.Code == studentCode && e.isPassClass == true);// Để đảm bảo Chỉ những trường hợp đủ đk lên lớp mới dc lên(khác vs false và null);
+                        var resultAddStudent = await AddStudentToClass(studentCode, newClassId, nextYear);
+                        if(resultAddStudent.Code == "500")
+                        {
+                            return new ApiResponse<string>
+                            {
+                                Code = "500",
+                                Data = null,
+                                Message = resultAddStudent.Message
+                            };
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"Lỗi khi thêm học sinh {studentCode} vào lớp mới: {ex.Message}");
+                        return new ApiResponse<string>
+                        {
+                            Code = "500",
+                            Message = $"Lỗi khi thêm học sinh {studentCode} vào lớp mới",
+                            Data = ex.Message
+                        };
+                    }
+                }
+
+                existingOldClass.Classes_NextClassId = newClassId.ToString();
+                await _context.SaveChangesAsync();
+                return new ApiResponse<string>
+                {
+                    Code = "200",
+                    Message = "Chuyển học sinh sang lớp mới thành công",
+                    Data = $"Đã chuyển {studentCodes.Count} học sinh sang lớp mới"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Lỗi tổng quát: {ex.Message}");
+                return new ApiResponse<string>
+                {
+                    Code = "500",
+                    Message = "Lỗi khi nâng lớp học sinh",
+                    Data = ex.Message
+                };
+            }
+        }
+
+
+        public async Task<ApiResponse<string>> CreateClassesToAdvance(string year, List<string> codeClasses)
+        {
+            try
+            {
+                // Parse "2024-2025" → startYear = 2024
+                var yearParts = year.Split('-');
+                if (yearParts.Length != 2 || !int.TryParse(yearParts[0], out int startYear))
+                {
+                    return new ApiResponse<string>
+                    {
+                        Code = "400",
+                        Data = null,
+                        Message = "Năm học không hợp lệ"
+                    };
+                }
+
+                // Tính năm học kế tiếp: "2025-2026"
+                string nextYear = $"{startYear + 1}-{startYear + 2}";
+
+                foreach (var codeClass in codeClasses)
+                {
+                    // VD: "10A4_24" hoặc "11B1_24"
+                    var parts = codeClass.Split('_');
+                    if (parts.Length != 2) continue;
+
+                    string rawName = parts[0]; // "10A4"
+
+                    // Tách khối và hậu tố
+                    string prefix = new string(rawName.TakeWhile(char.IsDigit).ToArray()); // "10"
+                    string suffix = new string(rawName.SkipWhile(char.IsDigit).ToArray()); // "A4"
+
+                    if (!int.TryParse(prefix, out int currentGrade)) continue;
+
+                    if (currentGrade >= 12) continue; // Bỏ qua lớp 12
+
+                    int nextGrade = currentGrade + 1; // 10 -> 11, 11 -> 12
+                    string newClassName = $"{nextGrade}{suffix}"; // VD: "11A4"
+
+                    var createClassRequest = new ClassRequest
+                    {
+                        Classes_Name = newClassName,
+                        Year = nextYear
+                    };
+
+                    var result = await AddClass(createClassRequest);
+
+                    if (result == null)
+                    {
+                        return new ApiResponse<string>
+                        {
+                            Code = "500",
+                            Data = null,
+                            Message = $"Tạo lớp thất bại: {newClassName}"
+                        };
+                    }
+                }
+
+                return new ApiResponse<string>
+                {
+                    Code = "200",
+                    Data = "Tạo lớp thành công",
+                    Message = "Đã tạo xong các lớp để nâng lớp"
+                };
+            }
+            catch (Exception e)
             {
                 return new ApiResponse<string>
                 {
                     Code = "500",
-                    Message = "LỚp đã tồn tại!",
-                    Data = "Lớp đã tồn tại!"
+                    Data = null,
+                    Message = "Có lỗi khi tạo lớp để nâng lớp: " + e.Message
                 };
             }
-            foreach (var student in listStudentId) {
-                try
+        }
+
+        public async Task<ApiResponse<string>> AdvanceClassForStudents(IEnumerable<string> studentCodes, Guid classId, string year)
+        {
+            // Tính nextYear từ year
+            var yearParts = year.Split('-');
+            if (yearParts.Length != 2 || !int.TryParse(yearParts[0], out int fromYear))
+            {
+                return new ApiResponse<string>
                 {
-                    await AddStudentToClass(student, data.Classes_Id, y);
-                }
-                catch (Exception ex) {
-                    _logger.LogError(ex.Message);
-                    return new ApiResponse<string>
-                    {
-                        Code = "500",
-                        Data = "An error occurred while Advance Student to next class!",
-                        Message = ex.Message
-                    };
-                }
+                    Code = "400",
+                    Message = "Năm học không hợp lệ.",
+                    Data = ""
+                };
             }
+            var nextYear = $"{fromYear + 1}-{fromYear + 2}";
+
+            var classEntity = await _context.Classes.FirstOrDefaultAsync(c => c.Classes_Id == classId);
+            if (classEntity == null)
+            {
+                return new ApiResponse<string>
+                {
+                    Code = "404",
+                    Message = "Lớp mới không tồn tại.",
+                    Data = ""
+                };
+            }
+
+            int successCount = 0;
+            foreach (var studentCode in studentCodes)
+            {
+                var student = await _context.Students.FirstOrDefaultAsync(s => s.Code == studentCode);
+                if (student == null) continue;
+
+                // Kiểm tra học sinh đã có trong lớp mới ở năm tiếp theo chưa
+                var existed = await _context.ClassStudents.AnyAsync(cs =>
+                    cs.Student_Id == student.Id && cs.Class_Id == classId && cs.Year == nextYear);
+                if (existed) continue;
+
+                var newClassStudent = new Class_Student
+                {
+                    Student_Id = student.Id,
+                    Class_Id = classId,
+                    Year = nextYear
+                };
+
+                await _context.ClassStudents.AddAsync(newClassStudent);
+                classEntity.Classes_Quantity += 1;
+                successCount++;
+            }
+
+            await _context.SaveChangesAsync();
+
             return new ApiResponse<string>
             {
                 Code = "200",
-                Message = "Advancing student to next class was successful!",
-                Data = "Advancing student to next class was successful!"
+                Message = $"Đã nâng lớp thành công cho {successCount} học sinh.",
+                Data = ""
+            };
+        }
+
+        public async Task<ApiResponse<string>> ChangeStudentsToClass(List<string> studentCodes, Guid classId, string year)
+        {
+            // Lấy danh sách học sinh tương ứng
+            var students = await _context.Students
+                .Where(s => studentCodes.Contains(s.Code))
+                .ToListAsync();
+
+            if (students.Count == 0)
+            {
+                return new ApiResponse<string>
+                {
+                    Code = "404",
+                    Message = "Không tìm thấy học sinh nào trong danh sách cung cấp.",
+                    Data = ""
+                };
+            }
+
+            // Lấy lớp mới
+            var newClass = await _context.Classes.FirstOrDefaultAsync(c => c.Classes_Id == classId);
+            if (newClass == null)
+            {
+                return new ApiResponse<string>
+                {
+                    Code = "404",
+                    Message = "Lớp mới không tồn tại.",
+                    Data = ""
+                };
+            }
+
+            foreach (var student in students)
+            {
+                var oldClassStudent = await _context.ClassStudents
+                    .FirstOrDefaultAsync(cs => cs.Student_Id == student.Id && cs.Year == year);
+
+                if (oldClassStudent != null)
+                {
+                    var oldClass = await _context.Classes.FirstOrDefaultAsync(c => c.Classes_Id == oldClassStudent.Class_Id);
+                    if (oldClass != null)
+                    {
+                        oldClass.Classes_Quantity = Math.Max(0, oldClass.Classes_Quantity - 1);
+                    }
+
+                    _context.ClassStudents.Remove(oldClassStudent);
+                }
+
+                // Thêm vào lớp mới
+                var newClassStudent = new Class_Student
+                {
+                    Class_Id = classId,
+                    Student_Id = student.Id,
+                    Year = year
+                };
+                await _context.ClassStudents.AddAsync(newClassStudent);
+
+                newClass.Classes_Quantity += 1;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return new ApiResponse<string>
+            {
+                Code = "200",
+                Message = "Chuyển học sinh thành công.",
+                Data = ""
             };
         }
     }

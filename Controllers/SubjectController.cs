@@ -73,5 +73,28 @@ namespace NL_THUD.Controllers
             var response = await _subjectService.UnassignTeachersFromSubject(subjectId, teacherId, classId);
             return Ok(response);
         }
+
+
+        //Hàm lấy danh sách môn học kèm giáo viên giảng dạy môn học đó tại một thời điểm của một học sinh thuộc lớp
+        [HttpGet("teacher-by-subject/{classId}")]
+        public async Task<IActionResult> getTeacherBySubjects(string classId, [FromQuery] string year, [FromQuery]int semester)
+        {
+            var response = await _subjectService.GetTeacherBySubjects(classId, semester, year);
+            return Ok(response);
+        }
+
+        [HttpGet("teaching-by-subject/{subjectId}")]
+        public async Task<IActionResult> getTeachingBySubject(string subjectId, [FromQuery] string year, [FromQuery] string grade)
+        {
+            var response = await _subjectService.GetTeachingByGradeAndSubject(grade, year, subjectId);
+            return Ok(response);
+        }
+
+        [HttpGet("teaching-by-teachers")]
+        public async Task<IActionResult> getTeachingsByTeachers([FromQuery] string year, [FromQuery] int semester)
+        {
+            var response = await _subjectService.GetTeachingByTeacher(year, semester);
+            return Ok(response);
+        }
     }
 }

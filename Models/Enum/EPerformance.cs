@@ -3,9 +3,9 @@
     public enum EPerformance
     {
         NULL,
-        EXCELENT,
-        GOOD,
+        WEAK,
         AVARAGE,
-        WEAK
+        GOOD,
+        EXCELENT
     }
 }

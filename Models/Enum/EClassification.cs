@@ -3,9 +3,9 @@
     public enum EClassification
     {
         NULL,
-        EXCELENT,
+        //WEAK, 
+        //AVARAGE,
         GOOD,
-        AVARAGE,
-        WEAK
+        EXCELENT
     }
 }

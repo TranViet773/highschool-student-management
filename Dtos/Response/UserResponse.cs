@@ -27,6 +27,7 @@ namespace NL_THUD.Dtos.Response
         public string? AccessToken { get; set; }
         public string? ClassCode { get; set; }
         public string? ClassId { get; set; }
+        public string? NewClassCode { get; set; } // Lớp mới thôi (dành cho học sinh ở lại lớp)
 
         //Student
         public string? Student_Mother_Name { get; set; }

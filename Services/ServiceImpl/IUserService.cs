@@ -7,7 +7,7 @@ namespace NL_THUD.Services.ServiceImpl
     {
         Task<UserResponse> RegisterAsync(UserRegisterRequest request);
         Task<UserResponse> LogInAsync(UserLoginRequest request);
-        Task<UserResponse> GetUserByIdAsync(Guid id);
+        Task<UserResponse> GetUserByIdAsync(Guid id, string year);
         Task<CurrentUserResponse> GetCurrentUserAsync();
         Task<UserResponse> UpdateUserAsync(UserUpdateRequest register, Guid userId);
         Task<RevokeRefreshTokenResponse> RevokeRefreshToken(RefreshTokenRequest refreshToken);
@@ -17,5 +17,8 @@ namespace NL_THUD.Services.ServiceImpl
         Task<List<UserResponse>> filterUser(string? codeClass, string? year, string? query, string role);
         Task<ApiResponse<UserResponse>> changePasswordAsync(UserChangePasswordRequest request, Guid id);
         Task<ApiResponse<UserResponse>> getAdvisorByStudent(string classId, string year, string semester);
+
+        Task<ApiResponse<UserResponse>> BlockAndUnblockUser(string userId);
+        Task<ApiResponse<UserResponse>> SetActiveUser(string userId);
     }
 }

@@ -18,5 +18,6 @@ namespace NL_THUD.Models
         public Schedules schedules { get; set; }
 
         public string Year { get; set; }
+
     }
 }

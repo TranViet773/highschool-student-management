@@ -181,6 +181,59 @@ namespace NL_THUD.Migrations
                     b.ToTable("Addresses", (string)null);
                 });
 
+            modelBuilder.Entity("NL_THUD.Models.Attendance", b =>
+                {
+                    b.Property<Guid>("Attendance_Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Attendance_MarkedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Attendance_Note")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Attendance_Semester")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Attendance_SubjectId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Attendance_SubjectName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Attendance_Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Attendance_Year")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsExcused")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsUnexcused")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("StudentsId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("TeacherId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Attendance_Id");
+
+                    b.HasIndex("StudentsId");
+
+                    b.HasIndex("TeacherId");
+
+                    b.ToTable("Attendances");
+                });
+
             modelBuilder.Entity("NL_THUD.Models.Class_Student", b =>
                 {
                     b.Property<string>("Student_Id")
@@ -222,6 +275,9 @@ namespace NL_THUD.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Classes_NextClassId")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("Classes_Quantity")
                         .HasColumnType("int");
 
@@ -261,9 +317,21 @@ namespace NL_THUD.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int?>("Classification")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Conduct")
+                        .HasColumnType("int");
+
                     b.Property<string>("Evaluation_Content")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("Performance")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Rank")
+                        .HasColumnType("int");
 
                     b.Property<string>("StudentId")
                         .IsRequired()
@@ -272,8 +340,8 @@ namespace NL_THUD.Migrations
                     b.Property<DateTime?>("UpdateAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("UpdateTime_Expire")
-                        .HasColumnType("datetime2");
+                    b.Property<bool?>("isPassClass")
+                        .HasColumnType("bit");
 
                     b.Property<int>("semester")
                         .HasColumnType("int");
@@ -440,6 +508,75 @@ namespace NL_THUD.Migrations
                     b.ToTable("Provinces");
                 });
 
+            modelBuilder.Entity("NL_THUD.Models.Reevaluation", b =>
+                {
+                    b.Property<Guid>("Reevaluation_Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ClassId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double?>("Reevaluation_AfterScore")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Reevaluation_ApporverId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("Reevaluation_PreScore")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Reevaluation_Reason")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Reevaluation_ScoreColumn")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Reevaluation_Semester")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Reevaluation_Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("Reevaluation_TimestampApprove")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("Reevaluation_TimestampEdit")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("Reevaluation_TimestampExpiry")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("Reevaluation_TimestampRequest")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Reevaluation_Year")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("StudentsId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<Guid>("SubjectsId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("TeacherId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Reevaluation_Id");
+
+                    b.HasIndex("StudentsId");
+
+                    b.HasIndex("SubjectsId");
+
+                    b.HasIndex("TeacherId");
+
+                    b.ToTable("Reevaluations");
+                });
+
             modelBuilder.Entity("NL_THUD.Models.Schedule_Detail", b =>
                 {
                     b.Property<Guid>("SubjectId")
@@ -487,6 +624,9 @@ namespace NL_THUD.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<double?>("AverageScore")
+                        .HasColumnType("float");
+
                     b.Property<string>("Comment")
                         .HasColumnType("nvarchar(max)");
 
@@ -499,17 +639,11 @@ namespace NL_THUD.Migrations
                     b.Property<double?>("FinalExamScore")
                         .HasColumnType("float");
 
-                    b.Property<DateTime?>("FinalExamScore_Expire")
-                        .HasColumnType("datetime2");
-
                     b.Property<DateTime?>("FinalExamScore_Timestamp")
                         .HasColumnType("datetime2");
 
                     b.Property<double?>("MidTearmScore")
                         .HasColumnType("float");
-
-                    b.Property<DateTime?>("MidTermScore_Expire")
-                        .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("MidTermScore_Timestamp")
                         .HasColumnType("datetime2");
@@ -517,7 +651,22 @@ namespace NL_THUD.Migrations
                     b.Property<double?>("OralScore")
                         .HasColumnType("float");
 
-                    b.Property<DateTime?>("OralScore_Expire")
+                    b.Property<double?>("OralScore1")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime?>("OralScore1_Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double?>("OralScore2")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime?>("OralScore2_Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double?>("OralScore3")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime?>("OralScore3_Timestamp")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("OralScore_Timestamp")
@@ -526,11 +675,29 @@ namespace NL_THUD.Migrations
                     b.Property<double?>("QuizScore")
                         .HasColumnType("float");
 
-                    b.Property<DateTime?>("QuizScore_Expire")
+                    b.Property<double?>("QuizScore1")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime?>("QuizScore1_Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double?>("QuizScore2")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime?>("QuizScore2_Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double?>("QuizScore3")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime?>("QuizScore3_Timestamp")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("QuizScore_Timestamp")
                         .HasColumnType("datetime2");
+
+                    b.Property<bool>("ScoringType")
+                        .HasColumnType("bit");
 
                     b.Property<int>("Semester")
                         .HasColumnType("int");
@@ -544,9 +711,6 @@ namespace NL_THUD.Migrations
 
                     b.Property<double?>("TestScore")
                         .HasColumnType("float");
-
-                    b.Property<DateTime?>("TestScore_Expire")
-                        .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("TestScore_Timestamp")
                         .HasColumnType("datetime2");
@@ -573,6 +737,9 @@ namespace NL_THUD.Migrations
                     b.Property<string>("Subject_Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("Subject_ScoringType")
+                        .HasColumnType("bit");
 
                     b.HasKey("Subject_Id");
 
@@ -822,6 +989,25 @@ namespace NL_THUD.Migrations
                     b.Navigation("Wards");
                 });
 
+            modelBuilder.Entity("NL_THUD.Models.Attendance", b =>
+                {
+                    b.HasOne("NL_THUD.Models.Students", "Students")
+                        .WithMany("Attendances")
+                        .HasForeignKey("StudentsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NL_THUD.Models.Teacher", "Teacher")
+                        .WithMany("Attendances")
+                        .HasForeignKey("TeacherId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Students");
+
+                    b.Navigation("Teacher");
+                });
+
             modelBuilder.Entity("NL_THUD.Models.Class_Student", b =>
                 {
                     b.HasOne("NL_THUD.Models.Classes", "Class")
@@ -867,6 +1053,31 @@ namespace NL_THUD.Migrations
                         .IsRequired();
 
                     b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("NL_THUD.Models.Reevaluation", b =>
+                {
+                    b.HasOne("NL_THUD.Models.Students", "Students")
+                        .WithMany("Reevaluations")
+                        .HasForeignKey("StudentsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NL_THUD.Models.Subjects", "Subjects")
+                        .WithMany("Reevaluations")
+                        .HasForeignKey("SubjectsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NL_THUD.Models.Teacher", "Teacher")
+                        .WithMany("Reevaluation")
+                        .HasForeignKey("TeacherId");
+
+                    b.Navigation("Students");
+
+                    b.Navigation("Subjects");
+
+                    b.Navigation("Teacher");
                 });
 
             modelBuilder.Entity("NL_THUD.Models.Schedule_Detail", b =>
@@ -1036,6 +1247,8 @@ namespace NL_THUD.Migrations
 
             modelBuilder.Entity("NL_THUD.Models.Subjects", b =>
                 {
+                    b.Navigation("Reevaluations");
+
                     b.Navigation("Schedule_Detail");
 
                     b.Navigation("Teacher_Subjects");
@@ -1051,9 +1264,13 @@ namespace NL_THUD.Migrations
 
             modelBuilder.Entity("NL_THUD.Models.Students", b =>
                 {
+                    b.Navigation("Attendances");
+
                     b.Navigation("ClassStudents");
 
                     b.Navigation("Evaluations");
+
+                    b.Navigation("Reevaluations");
 
                     b.Navigation("student_Scores");
                 });
@@ -1069,6 +1286,10 @@ namespace NL_THUD.Migrations
 
             modelBuilder.Entity("NL_THUD.Models.Teacher", b =>
                 {
+                    b.Navigation("Attendances");
+
+                    b.Navigation("Reevaluation");
+
                     b.Navigation("TeacherClass");
 
                     b.Navigation("TeacherSubject");

@@ -11,5 +11,9 @@ namespace NL_THUD.Services.ServiceImpl
         Task<ApiResponse<List<AdvisorsInYearResponse>>> getAdvisorsInYear(string year);
 
 
+        //Lấy danh sách (lớp + học sinh) đã chủ nhiệm - log lịch sử chủ nhiệm.
+        Task<ApiResponse<List<ClassResponse>>> getListStudentAndClassByAdvisor(string teacherId);
+
+        Task<ApiResponse<List<TimeLineTeachingResponse>>> getTimeLineTeaching(string teacherId);
     }
 }

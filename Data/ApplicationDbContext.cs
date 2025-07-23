@@ -122,6 +122,8 @@ namespace NL_THUD.Data
         public DbSet<Schedules> Schedules { get; set; }
         public DbSet<ManagementStaff> ManagementStaffs { get; set; }
         public DbSet<Classes> Classes { get; set; }
+        public DbSet<Attendance> Attendances { get; set; }
+        public DbSet<Reevaluation> Reevaluations { get; set; }
 
         // các thực thể yếu
         public DbSet<Teacher_Class> TeacherClasses { get; set; }

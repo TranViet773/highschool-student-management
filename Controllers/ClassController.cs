@@ -105,9 +105,16 @@ namespace NL_THUD.Controllers
             return Ok(result);
         }
 
+        [HttpGet("student/{studentId}")]
+        public async Task<IActionResult> getClassOfStudent(string studentId)
+        {
+            var response = await _studentService.GetAllClassByStudentId(studentId);
+            return Ok(response);
+        }
+
         [HttpGet("teacher/{id}")]
         [Authorize]
-        public async Task<IActionResult> getClassByTeacherId(string id, [FromQuery]string semester, [FromQuery]string year)
+        public async Task<IActionResult> getClassByTeacherId(string id, [FromQuery]string? semester, [FromQuery]string? year)
         {
             var response = await _classService.GetClassByTeacher(id, year, semester);
             return Ok(response);
@@ -131,9 +138,17 @@ namespace NL_THUD.Controllers
 
         [HttpPost("change-student")]
         [Authorize]
-        public async Task<IActionResult> changeStudent(string studentCode, Guid classId)
+        public async Task<IActionResult> changeStudent(string studentCode, Guid classId, string year)
         {
-            var response = await _classService.ChangeStudentToClass(studentCode, classId);
+            var response = await _classService.ChangeStudentToClass(studentCode, classId, year);
+            return Ok(response);
+        }
+
+        [HttpPost("change-students/class/{classId}")]
+        [Authorize]
+        public async Task<IActionResult> changeStudents([FromBody]List<string> studentCode, Guid classId, [FromQuery]string year)
+        {
+            var response = await _classService.ChangeStudentsToClass(studentCode, classId, year);
             return Ok(response);
         }
 
@@ -147,9 +162,25 @@ namespace NL_THUD.Controllers
 
         [HttpPost("advance-to-next-class")]
         [Authorize]
-        public async Task<IActionResult> AdvanceStudentsToNextClass([FromQuery] Guid classId, [FromQuery]string year)
+        public async Task<IActionResult> AdvanceStudentsToNextClass([FromQuery] Guid oldClassId, [FromQuery] Guid newClassId, [FromQuery]string year)
         {
-            var response = await _classService.AdvanceStudentsToNextClass(classId, year);
+            var response = await _classService.AdvanceStudentsToNextClass(oldClassId, newClassId, year);
+            return Ok(response);
+        }
+
+        [HttpPost("create-class-to-advance")]
+        [Authorize]
+        public async Task<IActionResult> CreateClassToAdvance([FromBody]List<string> classCodes, [FromQuery] string year)
+        {
+            var response = await _classService.CreateClassesToAdvance(year, classCodes);
+            return Ok(response);
+        }
+
+        [HttpPost("advance-student/class/{classId}")]
+        [Authorize]
+        public async Task<IActionResult> AdvanceClassForStudents([FromBody]IEnumerable<string> studentCodes, Guid classId, [FromQuery]string year)
+        {
+            var response = await _classService.AdvanceClassForStudents(studentCodes, classId, year);
             return Ok(response);
         }
     }

@@ -9,6 +9,9 @@ namespace NL_THUD.Services.ServiceImpl
         //Khởi tạo bảng điểm tất cả các môn cho 1 học sinh.
         Task<ApiResponse<string>> InitializeScoreBoard(string studentId, string year, int semester);
 
+        //Khởi tạo bảng điểm cho 1 môn cho 1 học sinh
+        Task<ApiResponse<String>> InitializeScoreBoardForSubject(string studenId, string year, int semester, string subjectId);
+
         //lấy các cột điểm của một môn(Student_Score) của một học sinh.
         Task<ApiResponse<ScoreOfSubjectResponse>> GetScoreOfSubject(string studentId, string year, int semester, Guid subjecId);
 
@@ -32,5 +35,21 @@ namespace NL_THUD.Services.ServiceImpl
 
         Task<ApiResponse<ResultFinalYear>> GetResultFinalYear(string studentId, string year);
 
+        //Lấy dữ liệu điểm của một học sinh(HK1-HK2_Cả năm) để thống kê 
+        Task<ApiResponse<StatisticalAvgSubjectResponse>> StatisticalAvgSubject(string studentId, string year);
+
+        //Lấy điểm trung bình môn cuối năm của một học sinh.
+        Task<ApiResponse<string>> getYearEndSubjectAverage(string studentId, string year); //Tên Môn, Mã Môn, Số điểm.
+
+
+        //Lấy bảng điểm của tất cả học sinh (kèm thông tin học sinh) thuộc một trong một năm học và học kỳ
+        Task<ApiResponse<List<ScoreBoardOfClassInSemesterResponse>>> getScoreBoardStudent(string classId, int semester, string year);
+
+        //Lấy kết quả bao gồm hạnh kiểm - học lực - xếp loại - khen thưởng. theo năm học học kỳ của tất cả học sinh thuộc một lớp.
+        Task<ApiResponse<FinalResultOfClassResponse>> GetFinalResultStudentsInClass(string classId, int semester, string year);
+
+        // Lấy tỷ lệ điểm số của một lớp 
+        Task<ApiResponse<SubjectScoreRatioOfClassResponse>> GetScoreRatioOfClass(string classId, int semester, string year, Guid subjectId);
     }
 }
+ 

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Azure;
 using Microsoft.EntityFrameworkCore;
 using NL_THUD.Data;
 using NL_THUD.Dtos.Request;
@@ -78,7 +79,6 @@ namespace NL_THUD.Services
             }
         }
 
-
         public async Task<ApiResponse<List<SubjectResponse>>> getAll()
         {
             var result = await _context.Subjects.ToListAsync();
@@ -108,6 +108,135 @@ namespace NL_THUD.Services
                 Message = "Successfully!",
                 Data = _mapper.Map<SubjectResponse>(subject)
             };
+        }
+
+        public async Task<ApiResponse<ListTeacherBySubjectsResponse>> GetTeacherBySubjects(string classId, int semester, string year)
+        {
+            try
+            {
+                var teacherSubjects = await _context.TeacherSubjects
+                    .Where(ts => ts.Year == year && ts.Class_Id.ToString() == classId)
+                    .Include(ts => ts.Subjects)
+                    .Include(ts => ts.Teacher)
+                    .Select(ts => new TeacherSubjectDto
+                    {
+                        SubjectId = ts.Subject_Id.ToString().ToLower(),
+                        SubjectName = ts.Subjects.Subject_Name,
+                        TeacherId = ts.Teacher.Id,
+                        TeacherName = ts.Teacher.Fullname
+                    })
+                    .ToListAsync();
+                ListTeacherBySubjectsResponse response = new ListTeacherBySubjectsResponse();
+                response.TeacherSubjects = teacherSubjects;
+                response.year = year;
+                response.semester = semester;
+                return new ApiResponse<ListTeacherBySubjectsResponse>
+                {
+                    Code = "200",
+                    Message = "Lấy dữ liệu thành công!",
+                    Data = response
+                };
+            }
+            catch (Exception ex) {
+                return new ApiResponse<ListTeacherBySubjectsResponse>
+                {
+                    Code = "500",
+                    Message = "Có lỗi khi lấy dữ liệu!",
+                    Data = null
+                };
+            }
+        }
+
+        public async Task<ApiResponse<ListTeachingByGradeAndSubjectResponse>> GetTeachingByGradeAndSubject(string grade, string year, string subjectId)
+        {
+            try
+            { //grade: 10, 11, 12
+                var existSubject = await _context.Subjects.FirstOrDefaultAsync(s => s.Subject_Id.ToString() == subjectId);
+                if(existSubject == null)
+                {
+                    return new ApiResponse<ListTeachingByGradeAndSubjectResponse>
+                    {
+                        Code = "404",
+                        Data = null,
+                        Message = "Không tìm thấy môn học."
+                    };
+                }
+                var result = new ListTeachingByGradeAndSubjectResponse();
+                result.Year = year.ToString();
+                result.Grade = int.Parse(grade);
+                var listTeaching = await _context.TeacherSubjects
+                        .Where(ts => ts.Subject_Id.ToString() == subjectId 
+                            && ts.Year == year 
+                            && ts.Classes.Classes_Code.Substring(0, 2) == grade)
+                        .Select(ts => new TeachingByGradeAndSubjectResponse { 
+                            ClassCode = ts.Classes.Classes_Code,
+                            ClassId = ts.Class_Id.ToString(),
+                            ClassName = ts.Classes.Classes_Name,
+                            TeacherId = ts.Teacher.Id,
+                            TeacherCode = ts.Teacher.Code,
+                            TeacherName = ts.Teacher.Fullname
+                        })
+                        .ToListAsync();
+
+                result.TeachingByGradeAndSubjectResponse = listTeaching;
+
+                return new ApiResponse<ListTeachingByGradeAndSubjectResponse>
+                {
+                    Code = "200",
+                    Message = "",
+                    Data = result
+                };
+
+            }catch(Exception e)
+            {
+                return new ApiResponse<ListTeachingByGradeAndSubjectResponse>
+                {
+                    Code = "500",
+                    Data = null,
+                    Message = "Có lỗi trong quá trình lấy danh sách giảng dạy."
+                };
+            }
+
+        }
+
+        public async Task<ApiResponse<List<ListTeachingByTeacherResponse>>> GetTeachingByTeacher(string year, int? semester)
+        {
+            try
+            {
+                var result = await _context.Teachers
+                        .Select(t => new ListTeachingByTeacherResponse
+                        {
+                            TeacherCode = t.Code,
+                            TeacherId = t.Id,
+                            TeacherName = t.Fullname,
+                            TeachingByTeacher = 
+                                t.TeacherSubject.Where(ts => ts.Year == year)
+                                .Select(ts => new TeachingByTeacherResponse
+                                {
+                                    ClassCode = ts.Classes.Classes_Code,
+                                    ClassName = ts.Classes.Classes_Name,
+                                    //SubjectId = ts.Subjects.Subject_Id,
+                                    SubjectName = ts.Subjects.Subject_Name,
+                                }).ToList()
+                        })
+                        .ToListAsync();
+
+                return new ApiResponse<List<ListTeachingByTeacherResponse>>
+                {
+                    Code = "200",
+                    Message = "Lấy danh sách Teaching - Teacher thành công!",
+                    Data = result
+                };
+            }
+            catch (Exception e)
+            {
+                return new ApiResponse<List<ListTeachingByTeacherResponse>>
+                {
+                    Code = "200",
+                    Message = "Có lỗi khi lấy danh sách Teaching của teacher.",
+                    Data = null
+                };
+            }
         }
 
         public async Task<ApiResponse<String>> removeSubjectAsync(Guid id)

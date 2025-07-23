@@ -18,6 +18,9 @@ namespace NL_THUD.Models
 
         public List<Class_Student> ClassStudents { get; set; } = new List<Class_Student>();
         public List<Student_Score> student_Scores { get; set; } = new List<Student_Score>();
+        public List<Attendance> Attendances { get; set; }
         public List<Evaluation> Evaluations { get; set; }
+        public List<Reevaluation> Reevaluations { get; set; }
+
     }
 }
